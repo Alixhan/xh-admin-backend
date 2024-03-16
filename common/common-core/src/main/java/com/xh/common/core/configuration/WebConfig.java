@@ -1,5 +1,6 @@
 package com.xh.common.core.configuration;
 
+import cn.dev33.satoken.config.SaTokenConfig;
 import cn.dev33.satoken.exception.NotWebContextException;
 import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.stp.StpUtil;
@@ -48,8 +49,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Resource
     private MyLoggerInterceptor myLoggerInterceptor;
+    @Resource
+    private SaTokenConfig saTokenConfig;
     @Setter
     private String [] allowedOriginPatterns;
+
+
 
     /**
      * 资源跨域设置
@@ -74,8 +79,8 @@ public class WebConfig implements WebMvcConfigurer {
                         new SaInterceptor(handle -> {
                             if (handle instanceof HandlerMethod) {
                                 StpUtil.checkLogin();
-                                //续签token
-                                StpUtil.updateLastActiveToNow();
+                                //续签token过期时间
+                                StpUtil.renewTimeout(saTokenConfig.getTimeout());
                             }
                         })
                 )
