@@ -10,7 +10,6 @@ import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.web.MyContext;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,32 +36,17 @@ public class MyFilter extends HttpFilter {
     @Resource
     private CommonService commonService;
 
-    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException {
         preHandle(request);
-        //设置指定匹配的才记录日志
-        boolean hit = SaRouter
-                .notMatch(ignored -> request.getRequestURI().endsWith("/query"))
-                .notMatch(
-                        "/api/system/log/get/**",
-                        "/api/system/user/queryOnlineUser",
-                        "/api/file/operation/download",
-                        "/api/system/user/queryUserGroupList"
-                )
-                .notMatchMethod("OPTIONS")
-                .isHit();
-        if (hit) {
-            ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
-            ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-            try {
-                chain.doFilter(requestWrapper, responseWrapper);
-            } catch (Exception e) {
-                log.error("请求异常", e);
-                MyContext.getSysLog().setStackTrace(CommonUtil.getThrowString(e));
-            }
-            afterHandle(requestWrapper, responseWrapper);
-            return;
+        ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
+        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
+        try {
+            chain.doFilter(requestWrapper, responseWrapper);
+        } catch (Exception e) {
+            log.error("请求异常", e);
+            MyContext.getSysLog().setStackTrace(CommonUtil.getThrowString(e));
         }
-        chain.doFilter(request, response);
+        afterHandle(requestWrapper, responseWrapper);
     }
 
     /**
@@ -94,7 +78,6 @@ public class MyFilter extends HttpFilter {
      */
     private void afterHandle(ContentCachingRequestWrapper request, ContentCachingResponseWrapper response) throws IOException {
         SysLog sysLog = MyContext.getSysLog();
-
         ServletInputStream inputStream = request.getRequest().getInputStream();
         //如果文件流已读取则从缓存中获取请求体
         if (Boolean.TRUE.equals(inputStream.isFinished())) {
@@ -104,7 +87,6 @@ public class MyFilter extends HttpFilter {
             String requestBody = new String(inputStream.readAllBytes());
             sysLog.setRequestBody(requestBody);
         }
-
         //存储响应体内容
         String contentType = response.getContentType();
         if (contentType != null && contentType.startsWith("application/json")) {
@@ -114,14 +96,27 @@ public class MyFilter extends HttpFilter {
         }
         response.copyBodyToResponse();
 
-        final SaTokenContext saTokenContextOrSecond = SaManager.getSaTokenContextOrSecond();
-        //异步存储请求的日志信息
-        Mono.just(sysLog).subscribe(i -> {
-            // 因为会开启新线程，所以把上SaToken下文对象传递进来
-            if (saTokenContextOrSecond != null) {
-                SaManager.setSaTokenContext(saTokenContextOrSecond);
-            }
-            commonService.save(i);
-        });
+        boolean hit = SaRouter
+                .notMatch(ignored -> request.getRequestURI().endsWith("/query"))
+                .notMatch(
+                        "/api/system/log/get/**",
+                        "/api/system/user/queryOnlineUser",
+                        "/api/file/operation/download",
+                        "/api/system/user/queryUserGroupList"
+                )
+                .notMatchMethod("OPTIONS")
+                .isHit();
+        //设置指定匹配的或者出现报错的才记录日志
+        if (hit || sysLog.getStackTrace() != null) {
+            final SaTokenContext saTokenContextOrSecond = SaManager.getSaTokenContextOrSecond();
+            //异步存储请求的日志信息
+            Mono.just(sysLog).subscribe(i -> {
+                // 因为会开启新线程，所以把上SaToken下文对象传递进来
+                if (saTokenContextOrSecond != null) {
+                    SaManager.setSaTokenContext(saTokenContextOrSecond);
+                }
+                commonService.save(i);
+            });
+        }
     }
 }
