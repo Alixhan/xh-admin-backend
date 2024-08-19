@@ -5,8 +5,10 @@ import com.xh.common.core.service.CommonService;
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
+import com.xh.system.client.dto.SysRolePermissionDTO;
 import com.xh.system.client.entity.SysMenu;
 import com.xh.system.client.entity.SysRole;
+import com.xh.system.client.entity.SysRoleDataPermission;
 import com.xh.system.client.entity.SysRoleMenu;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -130,5 +132,27 @@ public class SysRoleService extends BaseServiceImpl {
         }
         sql += " order by `order` asc";
         return baseJdbcDao.findList(SysMenu.class, sql, args.toArray());
+    }
+
+    /**
+     * 查询角色的数据权限
+     */
+    public List<SysRoleDataPermission> queryRoleDataPermission(Map<String, Object> param) {
+        String sql = "select * from sys_role_data_permission where deleted = 0 and sys_role_id = ? ";
+        return baseJdbcDao.findList(SysRoleDataPermission.class, sql, param.get("sysRoleId"));
+    }
+
+    /**
+     * 保存角色数据权限
+     */
+    @Transactional
+    public void saveRoleDataPermission(SysRolePermissionDTO sysRolePermissionDTO) {
+        String sql = "delete from sys_role_data_permission where sys_role_id = ? ";
+        primaryJdbcTemplate.update(sql, sysRolePermissionDTO.getSysRoleId());
+        List<SysRoleDataPermission> permissions = sysRolePermissionDTO.getPermissions();
+        for (SysRoleDataPermission dataPermission : permissions) {
+            dataPermission.setSysRoleId(sysRolePermissionDTO.getSysRoleId());
+            baseJdbcDao.insert(dataPermission);
+        }
     }
 }

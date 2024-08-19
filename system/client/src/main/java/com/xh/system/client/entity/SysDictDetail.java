@@ -15,20 +15,26 @@ import lombok.EqualsAndHashCode;
 public class SysDictDetail extends BaseEntity<Integer> {
     @Schema(title = "字典类型ID")
     private Integer sysDictTypeId;
+
     @Schema(title = "上级id")
     private Integer parentId;
+
     @Schema(title = "字典值key")
     private String value;
+
     @Schema(title = "字典名称")
     private String label;
+
     @Schema(title = "排序号")
     private Integer order;
+
     @Schema(title = "是否启用")
     private Boolean enabled;
 
-    @Schema(title = "数据自定类型ID")
+    @Schema(title = "数据字典类型ID")
     @Transient
     private String dictTypeId;
+
     @Schema(title = "数据自定类型名称")
     @Transient
     private String dictTypeName;

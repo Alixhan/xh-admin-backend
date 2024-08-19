@@ -5,8 +5,10 @@ import cn.dev33.satoken.annotation.SaMode;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
 import com.xh.common.core.web.RestResponse;
+import com.xh.system.client.dto.SysRolePermissionDTO;
 import com.xh.system.client.entity.SysMenu;
 import com.xh.system.client.entity.SysRole;
+import com.xh.system.client.entity.SysRoleDataPermission;
 import com.xh.system.service.SysRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,5 +62,20 @@ public class SysRoleController {
     public RestResponse<List<SysMenu>> queryRoleMenu(@RequestParam Map<String, Object> param) {
         List<SysMenu> roleMenus = sysRoleService.queryRoleMenu(param);
         return RestResponse.success(roleMenus);
+    }
+
+    @Operation(description = "查询角色的数据权限")
+    @GetMapping("/queryRoleDataPermission")
+    public RestResponse<List<SysRoleDataPermission>> queryRoleDataPermission(@RequestParam Map<String, Object> param) {
+        List<SysRoleDataPermission> roleDataPermission = sysRoleService.queryRoleDataPermission(param);
+        return RestResponse.success(roleDataPermission);
+    }
+
+    @SaCheckPermission("system:role:dataPermission")
+    @Operation(description = "保存角色数据权限")
+    @PostMapping("/saveRoleDataPermission")
+    public RestResponse<?> saveRoleDataPermission(@RequestBody SysRolePermissionDTO sysRolePermissionDTO) {
+        sysRoleService.saveRoleDataPermission(sysRolePermissionDTO);
+        return RestResponse.success();
     }
 }
