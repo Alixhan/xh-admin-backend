@@ -1,6 +1,7 @@
 package com.xh.file.service;
 
 import com.xh.common.core.service.BaseServiceImpl;
+import com.xh.common.core.service.CommonService;
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.web.MyException;
 import com.xh.common.core.web.PageQuery;
@@ -58,6 +59,8 @@ public class FileOperationService extends BaseServiceImpl {
     @Value("${minio.bucket}")
     private String bucket;
 
+    @Resource
+    private CommonService commonService;
     @Resource
     private PlatformTransactionManager platformTransactionManager;
     @Resource
@@ -316,6 +319,12 @@ public class FileOperationService extends BaseServiceImpl {
             sql += " and content_type like  ? '%' ";
             pageQuery.addArg(param.get("type"));
         }
+        // 数据权限
+        String permissionSql = commonService.getPermissionSql("sys_file", "create_by", "sys_role_id", "sys_org_id");
+        if (CommonUtil.isNotEmpty(permissionSql)) {
+            sql += " and %s".formatted(permissionSql);
+        }
+
         sql += " order by create_time desc";
         pageQuery.setBaseSql(sql);
         return baseJdbcDao.query(SysFile.class, pageQuery);

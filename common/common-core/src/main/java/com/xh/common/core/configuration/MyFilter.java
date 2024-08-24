@@ -115,7 +115,7 @@ public class MyFilter extends HttpFilter {
                 if (saTokenContextOrSecond != null) {
                     SaManager.setSaTokenContext(saTokenContextOrSecond);
                 }
-                commonService.save(i);
+                commonService.saveSysLog(i);
             });
         }
     }

@@ -43,7 +43,7 @@ public class CommonUtil {
      * 判断为null或者为空串
      */
     public static boolean isEmpty(Object object) {
-        return object == null || object.toString().length() == 0;
+        return object == null || object.toString().isEmpty();
     }
 
     /**

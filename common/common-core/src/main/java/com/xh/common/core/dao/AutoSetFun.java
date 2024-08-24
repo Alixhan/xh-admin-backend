@@ -1,6 +1,8 @@
 package com.xh.common.core.dao;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.xh.common.core.dto.OnlineUserDTO;
+import com.xh.common.core.utils.LoginUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -93,6 +95,40 @@ public enum AutoSetFun {
             } catch (IllegalAccessException e) {
                 log.error("自动注入失败", e);
             }
+        }
+    }),
+    /**
+     * 实体保存时，如果字段为null，设置字段值为当前使用岗位机构id
+     */
+    CURRENT_ORG((persistenceType, field, object) -> {
+        try {
+            field.setAccessible(true);
+            Class<?> type = field.getType();
+            if (field.get(object) == null && type == Integer.class) {
+                OnlineUserDTO onlineUserInfo = LoginUtil.getOnlineUserInfo();
+                if (onlineUserInfo != null) {
+                    field.set(object, onlineUserInfo.getOrgId());
+                }
+            }
+        } catch (IllegalAccessException e) {
+            log.error("自动注入失败", e);
+        }
+    }),
+    /**
+     * 实体保存时，如果字段为null，设置字段值为当前使用岗位角色id
+     */
+    CURRENT_ROLE((persistenceType, field, object) -> {
+        try {
+            field.setAccessible(true);
+            Class<?> type = field.getType();
+            if (field.get(object) == null && type == Integer.class) {
+                OnlineUserDTO onlineUserInfo = LoginUtil.getOnlineUserInfo();
+                if (onlineUserInfo != null) {
+                    field.set(object, onlineUserInfo.getRoleId());
+                }
+            }
+        } catch (IllegalAccessException e) {
+            log.error("自动注入失败", e);
         }
     }),
     /**

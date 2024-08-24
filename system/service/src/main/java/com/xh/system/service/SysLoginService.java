@@ -88,7 +88,7 @@ public class SysLoginService extends BaseServiceImpl {
         //尝试登录
         if (session == null && CommonUtil.isNotEmpty(username)) {
 
-            if(CommonUtil.isEmpty(params.get("isDemo"))) {
+            if (CommonUtil.isEmpty(params.get("isDemo"))) {
                 if (CommonUtil.isEmpty(captchaKey)) throw new MyException("非法登录");
                 if (CommonUtil.isEmpty(captchaCode)) throw new MyException("请输入图形验证码");
 
@@ -168,6 +168,7 @@ public class SysLoginService extends BaseServiceImpl {
             SysLog sysLog = MyContext.getSysLog();
             OnlineUserDTO onlineUserDTO = new OnlineUserDTO();
             onlineUserDTO.setToken(StpUtil.getTokenValue());
+            onlineUserDTO.setUserId(sysUser.getId());
             onlineUserDTO.setUserCode(sysUser.getCode());
             onlineUserDTO.setUserName(sysUser.getName());
             onlineUserDTO.setLoginBrowser(ua.getBrowser().getName());

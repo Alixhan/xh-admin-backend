@@ -2,10 +2,12 @@ package com.xh.system.service;
 
 import com.xh.common.core.entity.SysLog;
 import com.xh.common.core.service.BaseServiceImpl;
+import com.xh.common.core.service.CommonService;
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
 import com.xh.system.client.entity.SysUser;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,9 @@ import java.util.Map;
 @Slf4j
 public class SysLogService extends BaseServiceImpl {
 
+    @Resource
+    private CommonService commonService;
+
     /**
      * 日志查询
      */
@@ -26,10 +31,10 @@ public class SysLogService extends BaseServiceImpl {
     public PageResult<SysLog> query(PageQuery<Map<String, Object>> pageQuery) {
         Map<String, Object> param = pageQuery.getParam();
         String sql = """
-         select a.id, a.token,a.method,a.url,a.ip,a.ip_address,a.tag,a.operation,a.start_time,a.end_time,a.time,a.status,
-         a.locale, a.locale_label, a.sys_org_id, a.org_name, a.sys_role_id, a.role_name, a.create_by, a.create_time, b.name
-         from sys_log a left join sys_user b on b.id = a.create_by where a.deleted = 0
-        """;
+                 select a.id, a.token,a.method,a.url,a.ip,a.ip_address,a.tag,a.operation,a.start_time,a.end_time,a.time,a.status,
+                 a.locale, a.locale_label, a.sys_org_id, a.org_name, a.sys_role_id, a.role_name, a.create_by, a.create_time, b.name
+                 from sys_log a left join sys_user b on b.id = a.create_by where a.deleted = 0
+                """;
         if (CommonUtil.isNotEmpty(param.get("token"))) {
             sql += " and a.token = ? ";
             pageQuery.addArg(param.get("token"));
@@ -66,6 +71,13 @@ public class SysLogService extends BaseServiceImpl {
             sql += " and b.name like '%' ? '%'";
             pageQuery.addArg(param.get("name"));
         }
+
+        // 数据权限
+        String permissionSql = commonService.getPermissionSql("sys_log", "a.create_by", "a.sys_role_id", "a.sys_org_id");
+        if (CommonUtil.isNotEmpty(permissionSql)) {
+            sql += " and %s".formatted(permissionSql);
+        }
+
         sql += " order by a.id desc";
         pageQuery.setBaseSql(sql);
         return baseJdbcDao.query(SysLog.class, pageQuery);
@@ -77,7 +89,7 @@ public class SysLogService extends BaseServiceImpl {
     @Transactional(readOnly = true)
     public SysLog getById(Serializable id) {
         SysLog sysLog = baseJdbcDao.findById(SysLog.class, id);
-        if(sysLog.getCreateBy() != null){
+        if (sysLog.getCreateBy() != null) {
             SysUser sysUser = baseJdbcDao.findById(SysUser.class, sysLog.getCreateBy());
             sysLog.setName(sysUser.getName());
         }
