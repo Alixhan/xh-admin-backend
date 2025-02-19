@@ -173,6 +173,18 @@ public class SysUserService extends BaseServiceImpl {
     }
 
     /**
+     * 密码重置
+     */
+    @Transactional
+    public void resetPassword(SysUser sysUser) {
+        SysUser user = baseJdbcDao.findById(SysUser.class, sysUser.getId());
+        // 密码加密
+        String pwHash = BCrypt.hashpw(sysUser.getPassword(), BCrypt.gensalt());
+        user.setPassword(pwHash);
+        baseJdbcDao.update(user);
+    }
+
+    /**
      * 系统用户组查询
      */
     @Transactional(readOnly = true)

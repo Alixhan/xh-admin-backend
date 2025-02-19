@@ -127,6 +127,14 @@ public class SysUserController {
         return RestResponse.success(sysUserService.imports(sysUsers));
     }
 
+    @SaCheckPermission("system:user:resetPassword")
+    @Operation(description = "用户账号密码重置")
+    @PostMapping("/restPassword")
+    public RestResponse<ArrayList<Map<String, Object>>> restPassword(@RequestBody SysUser sysUsers) {
+        sysUserService.resetPassword(sysUsers);
+        return RestResponse.success();
+    }
+
     @SaCheckPermission("system:userGroup")
     @Operation(description = "系统用户组查询")
     @PostMapping("/queryUserGroupList")
