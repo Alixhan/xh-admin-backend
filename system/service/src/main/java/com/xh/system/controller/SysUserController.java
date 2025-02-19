@@ -129,8 +129,8 @@ public class SysUserController {
 
     @SaCheckPermission("system:user:resetPassword")
     @Operation(description = "用户账号密码重置")
-    @PostMapping("/restPassword")
-    public RestResponse<ArrayList<Map<String, Object>>> restPassword(@RequestBody SysUser sysUsers) {
+    @PostMapping("/resetPassword")
+    public RestResponse<ArrayList<Map<String, Object>>> resetPassword(@RequestBody SysUser sysUsers) {
         sysUserService.resetPassword(sysUsers);
         return RestResponse.success();
     }
