@@ -26,7 +26,7 @@ public class SaTokenConfigure {
         config.setIsConcurrent(true);               // 是否允许同一账号多地同时登录（为 true 时允许一起登录，为 false 时新登录挤掉旧登录）
         config.setIsShare(false);                    // 在多人登录同一账号时，是否共用一个 token （为 true 时所有登录共用一个 token，为 false 时每次登录新建一个 token）
         config.setTokenStyle("uuid");               // token 风格
-        config.setIsLog(true);                     // 是否输出操作日志
+        config.setIsLog(false);                     // 是否输出操作日志
         config.setMaxLoginCount(-1);
         return config;
     }

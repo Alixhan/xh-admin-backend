@@ -23,7 +23,7 @@ public class SystemWebClientConfig {
     @Value("${service.system:lb://system}")
     private String baseUrl;
 
-    public HttpServiceProxyFactory fileHttpServiceProxyFactory() {
+    public HttpServiceProxyFactory httpServiceProxyFactory() {
         WebClientAdapter webClientAdapter = WebClientAdapter.create(myWebClientBuilder.baseUrl(baseUrl).build());
         // 设置超时时间10s
         webClientAdapter.setBlockTimeout(Duration.ofSeconds(10));
@@ -35,6 +35,6 @@ public class SystemWebClientConfig {
      */
     @Bean
     public SysFileClient getSysFileServiceClient() {
-        return fileHttpServiceProxyFactory().createClient(SysFileClient.class);
+        return httpServiceProxyFactory().createClient(SysFileClient.class);
     }
 }
