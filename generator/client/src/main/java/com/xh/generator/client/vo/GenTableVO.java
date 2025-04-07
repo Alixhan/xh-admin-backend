@@ -100,6 +100,9 @@ public class GenTableVO {
     @Schema(title = "api路径")
     private String apiPath;
 
+    @Schema(title = "列表页全路径")
+    private String indexViewPath;
+
     @Schema(title = "列表排序")
     private String orderBy;
 
@@ -136,9 +139,21 @@ public class GenTableVO {
     @Schema(title = "后端项目路径")
     private String backendPath;
 
+    @Schema(title = "是否创建系统菜单")
+    private Boolean isCreateMenu;
+
+    @Schema(title = "是否启用数据权限")
+    private Boolean isDataPermission;
+
     @Schema(title = "建表语句")
     private String createTableSql;
 
+    @Schema(title = "菜单id")
+    private Integer menuId;
+
     @Schema(title = "列")
     private List<GenTableColumnDTO> columns;
+
+    @Schema(title = "当前登录用户ID")
+    private Integer userId;
 }

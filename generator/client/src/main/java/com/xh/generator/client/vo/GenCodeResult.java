@@ -33,6 +33,6 @@ public class GenCodeResult {
     @Schema(title = "绝对路径")
     private String absolutePath;
 
-    @Schema(title = "是否已存在")
-    private Boolean isExist;
+    @Schema(title = "错误信息")
+    private String errorMsg;
 }

@@ -1,12 +1,18 @@
 package ${servicePackage};
 
 import com.xh.common.core.service.BaseServiceImpl;
+<#if isDataPermission!false>
+import com.xh.common.core.service.CommonService;
+</#if>
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.web.MyException;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
 import ${entityPackage}.${entityName};
 import ${dtoPackage}.${dtoName};
+<#if isDataPermission!false>
+import jakarta.annotation.Resource;
+</#if>
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -17,7 +23,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.io.Serializable;
 <#if hasImport>
-    import java.util.ArrayList;
+import java.util.ArrayList;
 </#if>
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +38,11 @@ import java.util.Map;
 @Slf4j
 @Service
 public class ${serviceName} extends BaseServiceImpl {
+<#if isDataPermission!false>
+    @Resource
+    private CommonService commonService;
 
+</#if>
     /**
      * ${name}查询
      */
@@ -52,6 +62,14 @@ public class ${serviceName} extends BaseServiceImpl {
     </#if>
     </#list>
 
+    <#if isDataPermission!false>
+        // 数据权限
+        String permissionSql = commonService.getPermissionSql("${tableName}", "create_by", "sys_role_id", "sys_org_id");
+        if (CommonUtil.isNotEmpty(permissionSql)) {
+            sql += " and %s".formatted(permissionSql);
+        }
+
+    </#if>
     <#if orderBy??>
         sql += " ${orderBy}";
 

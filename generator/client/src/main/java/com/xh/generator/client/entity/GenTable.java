@@ -57,6 +57,12 @@ public class GenTable extends BaseEntity<Integer> {
     @Schema(title = "后端项目生成路径")
     private String backendPath;
 
+    @Schema(title = "是否创建系统菜单")
+    private Boolean isCreateMenu;
+
+    @Schema(title = "是否启用数据权限")
+    private Boolean isDataPermission;
+
     @Schema(title = "列")
     @Transient
     private List<GenTableColumnDTO> columns;

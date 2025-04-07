@@ -3,8 +3,10 @@ package com.xh.generator.service;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.google.common.base.CaseFormat;
+import com.xh.common.core.dto.OnlineUserDTO;
 import com.xh.common.core.service.BaseServiceImpl;
 import com.xh.common.core.utils.CommonUtil;
+import com.xh.common.core.utils.LoginUtil;
 import com.xh.common.core.web.MyException;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
@@ -204,12 +206,8 @@ public class CodeGenService extends BaseServiceImpl {
         }
         List<GenCodeResult> results = this.genCodeResults(vo);
         for (GenCodeResult result : results) {
-            if (Boolean.TRUE.equals(result.getIsExist())) {
-                if ("sql".equals(result.getType())) {
-                    throw new MyException("数据表 %s 已存在！".formatted(vo.getTableName()));
-                } else {
-                    throw new MyException("目标文件\"%s\"已存在！".formatted(result.getAbsolutePath()));
-                }
+            if (CommonUtil.isNotEmpty(result.getErrorMsg())) {
+                throw new MyException(result.getErrorMsg());
             }
         }
         for (GenCodeResult result : results) {
@@ -259,6 +257,12 @@ public class CodeGenService extends BaseServiceImpl {
         results.add(this.genCodeResult("backend/Entity.java.ftl", vo));
         results.add(this.genCodeResult("backend/Service.java.ftl", vo));
         results.add(this.genCodeResult("sql/createTable.sql.ftl", vo));
+        if (Boolean.TRUE.equals(vo.getIsCreateMenu())) {
+            results.add(this.genCodeResult("sql/createSysMenu.sql.ftl", vo));
+        }
+        if (Boolean.TRUE.equals(vo.getIsDataPermission())) {
+            results.add(this.genCodeResult("sql/createSysDataEntity.sql.ftl", vo));
+        }
         return results;
     }
 
@@ -266,11 +270,8 @@ public class CodeGenService extends BaseServiceImpl {
      * 生成源码结果
      */
     public GenCodeResult genCodeResult(String templatePath, GenTableVO vo) throws IOException, TemplateException {
-        String type = templatePath.split("/")[0];
-        String code = genCode(templatePath, vo);
         GenCodeResult genCodeResult = new GenCodeResult();
-        genCodeResult.setType(type);
-        genCodeResult.setCode(code);
+        String type = templatePath.split("/")[0];
         genCodeResult.setTemplatePath(templatePath);
         String bcp = "%s/client/src/main/java".formatted(vo.getService());
         String bsp = "%s/service/src/main/java".formatted(vo.getService());
@@ -312,9 +313,30 @@ public class CodeGenService extends BaseServiceImpl {
         if ("sql/createTable.sql.ftl".equals(templatePath)) {
             List<TableMateDataVO> tableList = getTableList(vo.getTableName());
             if (!tableList.isEmpty()) {
-                genCodeResult.setIsExist(true);
+                genCodeResult.setErrorMsg("数据表 %s 已存在！".formatted(vo.getTableName()));
             }
             genCodeResult.setFileName("createTable.sql");
+        }
+        if ("sql/createSysMenu.sql.ftl".equals(templatePath)) {
+            String sql2 = "select count(1) from sys_menu where deleted is false and name = ?";
+            Integer count = primaryJdbcTemplate.queryForObject(sql2, Integer.class, vo.getPermissionPrefix());
+            if (count == null || count > 0) {
+                genCodeResult.setErrorMsg("系统菜单name “%s” 已存在！".formatted(vo.getPermissionPrefix()));
+            }
+            String sql = "select max(id) from sys_menu";
+            Integer menuId = primaryJdbcTemplate.queryForObject(sql, Integer.class);
+            if (menuId == null) menuId = 0;
+            menuId++;
+            vo.setMenuId(menuId);
+            genCodeResult.setFileName("createSysMenu.sql");
+        }
+        if ("sql/createSysDataEntity.sql.ftl".equals(templatePath)) {
+            String sql = "select * from sys_data_entity where id = ?";
+            List<Map<String, Object>> list = primaryJdbcTemplate.queryForList(sql, vo.getTableName());
+            if (!list.isEmpty()) {
+                genCodeResult.setErrorMsg("系统数据实体 “%s” 已存在！".formatted(vo.getTableName()));
+            }
+            genCodeResult.setFileName("createSysDataEntity.sql");
         }
         if ("frontend".equals(type)) {
             genCodeResult.setZipPath("%s/%s/%s".formatted("frontend", middleStr, genCodeResult.getFileName()));
@@ -329,13 +351,19 @@ public class CodeGenService extends BaseServiceImpl {
         }
         if (CommonUtil.isNotEmpty(genCodeResult.getAbsolutePath())) {
             File file = new File(genCodeResult.getAbsolutePath());
-            genCodeResult.setIsExist(file.exists());
+            if (file.exists()) {
+                genCodeResult.setErrorMsg("目标文件\"%s\"已存在！".formatted(genCodeResult.getAbsolutePath()));
+            }
         }
+        genCodeResult.setCode(genCode(templatePath, vo));
+        genCodeResult.setType(type);
         return genCodeResult;
     }
 
     public GenTableVO getGenTableVO(GenTable genTable) {
         GenTableVO vo = new GenTableVO();
+        OnlineUserDTO onlineUserInfo = LoginUtil.getOnlineUserInfo();
+        vo.setUserId(onlineUserInfo.getUserId());
         BeanUtils.copyProperties(genTable, vo);
         String packageFormat = Stream.of(
                 "com.xh",
@@ -369,6 +397,7 @@ public class CodeGenService extends BaseServiceImpl {
         vo.setImportFun(vo.getEntityVarName() + "Import");
         vo.setMappingPath(Stream.of("/api", vo.getService(), vo.getModule(), vo.getEntityVarName()).filter(CommonUtil::isNotEmpty).collect(Collectors.joining("/")));
         vo.setApiPath("@" + vo.getMappingPath());
+        vo.setIndexViewPath(Stream.of("/src/views", vo.getService(), vo.getModule(), vo.getEntityVarName(), "index.vue").filter(CommonUtil::isNotEmpty).collect(Collectors.joining("/")));
         this.genColumns(vo);
         GenTableColumnDTO colDTO = vo.getColumns().stream().filter(i -> Boolean.TRUE.equals(i.getPrimaryKey())).findFirst().get();
         vo.setOrderBy(" order by %s desc ".formatted(colDTO.getColumnName()));
