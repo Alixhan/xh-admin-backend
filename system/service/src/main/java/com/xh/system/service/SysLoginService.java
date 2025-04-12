@@ -35,8 +35,10 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -354,7 +356,25 @@ public class SysLoginService extends BaseServiceImpl {
                     left join sys_org o on o.id = tem.sys_org_id
                     left join sys_role r on r.id = tem.sys_role_id
                 """;
-        return baseJdbcDao.findList(SysOrgRoleDTO.class, sql, userId, userId);
+        List<SysOrgRoleDTO> list = baseJdbcDao.findList(SysOrgRoleDTO.class, sql, userId, userId);
+
+        SysUser sysUser = baseJdbcDao.findById(SysUser.class, (Serializable) userId);
+        // 按设定顺序排序角色
+        if (CommonUtil.isNotEmpty(sysUser.getRoleSorter())) {
+            LinkedList<SysOrgRoleDTO> roles = new LinkedList<>();
+            for (String roleId : sysUser.getRoleSorter().split(",")) {
+                for (SysOrgRoleDTO role : list) {
+                    if (roleId.equals("%s_%s".formatted(role.getSysOrgId(), role.getSysRoleId()))) {
+                        roles.add(role);
+                        list.remove(role);
+                        break;
+                    }
+                }
+            }
+            roles.addAll(list);
+            return roles;
+        }
+        return list;
     }
 
     /**
@@ -383,5 +403,22 @@ public class SysLoginService extends BaseServiceImpl {
         } catch (NotLoginException e) {
             return null;
         }
+    }
+
+    /**
+     * 用户角色排序
+     */
+    @Transactional
+    public void roleSort(String roleSorter) {
+        Object userId = StpUtil.getLoginId();
+        SysUser sysUser = baseJdbcDao.findById(SysUser.class, (Serializable) userId);
+        sysUser.setRoleSorter(roleSorter);
+        baseJdbcDao.update(sysUser);
+
+        // 刷新缓存
+        SaSession session = StpUtil.getSession();
+        SysLoginUserInfoDTO loginUserInfoDTO = session.getModel(LoginUtil.SYS_USER_KEY, SysLoginUserInfoDTO.class);
+        loginUserInfoDTO.setRoles(getUserRoles(userId));
+        session.set(LoginUtil.SYS_USER_KEY, loginUserInfoDTO);
     }
 }

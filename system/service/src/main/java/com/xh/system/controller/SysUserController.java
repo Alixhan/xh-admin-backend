@@ -202,4 +202,11 @@ public class SysUserController {
         sysLoginService.kickOut(token);
         return RestResponse.success();
     }
+
+    @Operation(description = "用户角色排序")
+    @PostMapping("/roleSort")
+    public RestResponse<?> roleSort(@RequestBody String roleSorter) {
+        sysLoginService.roleSort(roleSorter);
+        return RestResponse.success();
+    }
 }
