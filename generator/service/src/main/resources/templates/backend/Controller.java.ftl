@@ -38,24 +38,31 @@ public class ${entityName}Controller {
         return RestResponse.success(data);
     }
 
+    @SaCheckPermission("${permissionPrefix}:add")
+    @Operation(description = "${name}新增")
+    @PostMapping("/insert")
+    public RestResponse<${entityName}> insert(@RequestBody ${dtoName} ${dtoVarName}) {
+        return RestResponse.success(${serviceVarName}.insert(${dtoVarName}));
+    }
+
     @SaCheckPermission("${permissionPrefix}:edit")
-    @Operation(description = "${name}保存")
-    @PostMapping("/save")
-    public RestResponse<${entityName}> save(@RequestBody ${dtoName} ${dtoVarName}) {
-        return RestResponse.success(${serviceVarName}.save(${dtoVarName}));
+    @Operation(description = "${name}修改")
+    @PutMapping("/update")
+    public RestResponse<${entityName}> update(@RequestBody ${dtoName} ${dtoVarName}) {
+        return RestResponse.success(${serviceVarName}.update(${dtoVarName}));
     }
 
     @SaCheckPermission(value = {"${permissionPrefix}:edit", "${permissionPrefix}:detail"}, mode = SaMode.OR)
     @Operation(description = "${name}详情")
     @GetMapping("/get/{id}")
-    public RestResponse<${entityName}> getById(@PathVariable Integer id) {
+    public RestResponse<${entityName}> getById(@PathVariable ${idJavaType} id) {
         return RestResponse.success(${serviceVarName}.getById(id));
     }
 
     @SaCheckPermission("${permissionPrefix}:del")
     @Operation(description = "${name}删除")
     @DeleteMapping("/del")
-    public RestResponse<?> del(@RequestParam List<Integer> ids) {
+    public RestResponse<?> del(@RequestParam List<${idJavaType}> ids) {
         ${serviceVarName}.del(ids);
         return RestResponse.success();
     }

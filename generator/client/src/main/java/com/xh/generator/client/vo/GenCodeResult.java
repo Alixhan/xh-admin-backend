@@ -35,4 +35,7 @@ public class GenCodeResult {
 
     @Schema(title = "错误信息")
     private String errorMsg;
+
+    @Schema(title = "是否执行")
+    private Boolean execute = true;
 }

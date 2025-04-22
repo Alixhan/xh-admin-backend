@@ -7,9 +7,14 @@ export function ${queryFun}(params: PageQuery, option?: RequestOption) {
     return createAxios(option).post(`${r'${baseUrl}'}${mappingPath}/query`, params)
 }
 
-// 保存${name}
-export function ${saveFun}(params = {}, option?: RequestOption) {
-    return createAxios(option).post(`${r'${baseUrl}'}${mappingPath}/save`, params)
+// 新增${name}
+export function ${insertFun}(params = {}, option?: RequestOption) {
+    return createAxios(option).post(`${r'${baseUrl}'}${mappingPath}/insert`, params)
+}
+
+// 修改${name}
+export function ${updateFun}(params = {}, option?: RequestOption) {
+    return createAxios(option).put(`${r'${baseUrl}'}${mappingPath}/update`, params)
 }
 
 // 获取${name}详情

@@ -211,7 +211,8 @@ public class CodeGenService extends BaseServiceImpl {
             }
         }
         for (GenCodeResult result : results) {
-            if ("1".equals(vo.getDesignType()) && "sql".equals(result.getType())) {
+            if(!Boolean.TRUE.equals(result.getExecute())) continue;
+            if ("sql".equals(result.getType())) {
                 primaryJdbcTemplate.execute(result.getCode());
             } else {
                 new File(result.getAbsoluteDirPath()).mkdirs();
@@ -312,8 +313,10 @@ public class CodeGenService extends BaseServiceImpl {
         }
         if ("sql/createTable.sql.ftl".equals(templatePath)) {
             List<TableMateDataVO> tableList = getTableList(vo.getTableName());
-            if (!tableList.isEmpty()) {
+            if (!tableList.isEmpty() && "1".equals(vo.getDesignType())) {
                 genCodeResult.setErrorMsg("数据表 %s 已存在！".formatted(vo.getTableName()));
+            }else if ("2".equals(vo.getDesignType())) {
+                genCodeResult.setExecute(false);
             }
             genCodeResult.setFileName("createTable.sql");
         }
@@ -391,7 +394,8 @@ public class CodeGenService extends BaseServiceImpl {
         vo.setDtoName(vo.getEntityName() + "DTO");
         vo.setDtoVarName(vo.getEntityVarName() + "DTO");
         vo.setQueryFun("query%sList".formatted(vo.getEntityName()));
-        vo.setSaveFun("postSave%s".formatted(vo.getEntityName()));
+        vo.setInsertFun("postInsert%s".formatted(vo.getEntityName()));
+        vo.setUpdateFun("putUpdate%s".formatted(vo.getEntityName()));
         vo.setGetFun("get%sById".formatted(vo.getEntityName()));
         vo.setDelFun("del%sByIds".formatted(vo.getEntityName()));
         vo.setImportFun(vo.getEntityVarName() + "Import");
@@ -399,9 +403,12 @@ public class CodeGenService extends BaseServiceImpl {
         vo.setApiPath("@" + vo.getMappingPath());
         vo.setIndexViewPath(Stream.of("/src/views", vo.getService(), vo.getModule(), vo.getEntityVarName(), "index.vue").filter(CommonUtil::isNotEmpty).collect(Collectors.joining("/")));
         this.genColumns(vo);
-        GenTableColumnDTO colDTO = vo.getColumns().stream().filter(i -> Boolean.TRUE.equals(i.getPrimaryKey())).findFirst().get();
-        vo.setOrderBy(" order by %s desc ".formatted(colDTO.getColumnName()));
-        vo.setIdProp(colDTO.getProp());
+        vo.getColumns().stream().filter(i -> Boolean.TRUE.equals(i.getPrimaryKey()))
+                .findFirst().ifPresent(colDTO -> {
+                    vo.setOrderBy(" order by %s desc ".formatted(colDTO.getColumnName()));
+                    vo.setIdProp(colDTO.getProp());
+                    vo.setIdJavaType(colDTO.getJavaType());
+                });
         vo.setPrimaryKeyGet("get%s".formatted(CommonUtil.toUpperCamel(vo.getIdProp())));
         vo.setHasImport(vo.getColumns().stream().anyMatch(i -> Boolean.TRUE.equals(i.getIsImport())));
         vo.setHasId(vo.getColumns().stream().filter(i -> !Boolean.TRUE.equals(i.getIsExtend())).anyMatch(i -> Boolean.TRUE.equals(i.getPrimaryKey())));

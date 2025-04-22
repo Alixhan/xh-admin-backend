@@ -83,7 +83,7 @@ const columns: Ref<CommonTableColumn[]> = computed(() => [
   { type: 'index', width: 90 },
 <#list columns as field>
 <#if field.isTable!false>
-  ${field.tableColStr}<#if field_has_next>,</#if>
+  ${field.tableColStr},
 </#if>
 </#list>
   {

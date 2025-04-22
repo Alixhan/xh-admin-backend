@@ -85,8 +85,11 @@ public class GenTableVO {
     @Schema(title = "查询方法名")
     private String queryFun;
 
-    @Schema(title = "保存方法名")
-    private String saveFun;
+    @Schema(title = "新增方法名")
+    private String insertFun;
+
+    @Schema(title = "修改方法名")
+    private String updateFun;
 
     @Schema(title = "详情方法名")
     private String getFun;
@@ -108,6 +111,9 @@ public class GenTableVO {
 
     @Schema(title = "主键字段")
     private String idProp;
+
+    @Schema(title = "主键字段java类型")
+    private String idJavaType;
 
     @Schema(title = "主键get方法")
     private String primaryKeyGet;

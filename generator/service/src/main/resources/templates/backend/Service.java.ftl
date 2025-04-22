@@ -51,7 +51,7 @@ public class ${serviceName} extends BaseServiceImpl {
         Map<String, Object> param = pageQuery.getParam();
         if (param == null) param = new HashMap<>();
 
-        String sql = "select * from ${tableName} where deleted is false ";
+        String sql = "select * from ${tableName} where 1=1<#if extend??> and deleted is false</#if> ";
 
     <#list columns as field>
     <#if field.isQuery!false>
@@ -79,17 +79,24 @@ public class ${serviceName} extends BaseServiceImpl {
     }
 
     /**
-     * ${name}保存
+     * ${name}新增
      */
     @Transactional
-    public ${entityName} save(${dtoName} ${dtoVarName}) {
+    public ${entityName} insert(${dtoName} ${dtoVarName}) {
         ${entityName} ${entityVarName} = new ${entityName}();
         BeanUtils.copyProperties(${dtoVarName}, ${entityVarName});
-        if (CommonUtil.isEmpty(${entityVarName}.${primaryKeyGet}())) {
-            baseJdbcDao.insert(${entityVarName});
-        } else {
-            baseJdbcDao.update(${entityVarName});
-        }
+        baseJdbcDao.insert(${entityVarName});
+        return ${entityVarName};
+    }
+
+    /**
+     * ${name}修改
+     */
+    @Transactional
+    public ${entityName} update(${dtoName} ${dtoVarName}) {
+        ${entityName} ${entityVarName} = new ${entityName}();
+        BeanUtils.copyProperties(${dtoVarName}, ${entityVarName});
+        baseJdbcDao.update(${entityVarName});
         return ${entityVarName};
     }
 
@@ -97,7 +104,7 @@ public class ${serviceName} extends BaseServiceImpl {
      * id获取${name}详情
      */
     @Transactional(readOnly = true)
-    public ${entityName} getById(Serializable id) {
+    public ${entityName} getById(${idJavaType} id) {
         return baseJdbcDao.findById(${entityName}.class, id);
     }
 
@@ -105,9 +112,13 @@ public class ${serviceName} extends BaseServiceImpl {
      * ids批量删除
      */
     @Transactional
-    public void del(List<Integer> ids) {
+    public void del(List<${idJavaType}> ids) {
         log.info("批量删除${name}--");
+        <#if extend??>
         String sql = "update ${tableName} set deleted = 1 where ${idProp} in (:ids)";
+        <#else>
+        String sql = "delete from ${tableName} where ${idProp} in (:ids)";
+        </#if>
         Map<String, Object> paramMap = new HashMap<>(){{
             put("ids", ids);
         }};
@@ -123,7 +134,7 @@ public class ${serviceName} extends BaseServiceImpl {
         List<Map<String, Object>> res = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {
             try {
-                save(data.get(i));
+                insert(data.get(i));
             } catch (MyException e) {
                 Map<String, Object> resMap = new HashMap<>();
                 resMap.put("rowIndex", i);

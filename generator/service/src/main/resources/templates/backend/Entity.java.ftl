@@ -30,8 +30,7 @@ import java.time.LocalDateTime;
 @Schema(title = "${name}")
 @Table(name = "${tableName}")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class ${entityName}${entityExtendClass} {
+public class ${entityName}${entityExtendClass!''} {
 <#list columns as field>
 <#if !(field.isVirtual!false) && !(field.isExtend!false)>
 

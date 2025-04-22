@@ -23,7 +23,7 @@
 <script setup lang="tsx">
 import type { PropType } from 'vue'
 import { ref, watchEffect } from 'vue'
-import { ${getFun}, ${saveFun} } from '${apiPath}'
+import { ${getFun}, ${insertFun}, ${updateFun} } from '${apiPath}'
 import { useI18n } from 'vue-i18n'
 <#if hasDict?seq_contains('form')>
 import useDictDetails from '@/utils/dict'
@@ -77,7 +77,8 @@ watchEffect(() => {
 // 保存方法
 function save() {
   formRef.value.submit().then(() => {
-    ${saveFun}(formData.value, {
+    const fun = props.handleType === 'add' ? ${insertFun} : ${updateFun}
+    fun(formData.value, {
       loadingRef: saveLoading,
       showSuccessMsg: true,
       successMsg: t('common.saveSuccess')
