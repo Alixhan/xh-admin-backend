@@ -58,7 +58,7 @@ gitee 码云代码仓库<br>
 
 ## ☕ 捐赠
 
-提交PR，提交issue，帮我点点star，或者直接打赏我，哈哈哈~~~
+提交PR，提交issue，帮我点点star，或者直接打赏我
 
 ## 📄 License
 
