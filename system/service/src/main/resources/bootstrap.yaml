@@ -12,20 +12,16 @@ spring:
     name: system
   cloud:
     nacos:
+      server-addr: ${nacos-server-addr}
+      username: ${nacos-username}
+      password: ${nacos-password}
       discovery:
-        server-addr: ${nacos-server-addr}
         namespace: ${nacos-namespace}
         group: ${nacos-group}
-        username: ${nacos-username}
-        password: ${nacos-password}
       config:
-        server-addr: ${nacos-server-addr}
-        username: ${nacos-username}
-        password: ${nacos-password}
-        file-extension: yaml
         namespace: ${nacos-namespace}
         group: ${nacos-group}
-        shared-configs:
-          - data-id: common.${spring.cloud.nacos.config.file-extension}
-            group: ${nacos-group}
-            refresh: true
+  config:
+    import:
+    - nacos:common.yaml?refreshEnabled=true
+    - nacos:${spring.application.name}.yaml?refreshEnabled=true

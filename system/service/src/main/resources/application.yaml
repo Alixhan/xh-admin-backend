@@ -13,14 +13,15 @@ spring:
       - http://192.168.**
   datasource:
     first:
-      url: jdbc:mysql://localhost:3306/bms?characterEncoding=utf-8
+      url: jdbc:mysql://localhost:3306/xh_admin?characterEncoding=utf-8
       username: root
       password: 123456
       configuration:
         maximum-pool-size: 20
+    # 第二数据源
     second:
-      url: jdbc:postgresql://localhost:5432/bms
-      username: postgres
+      url: jdbc:mysql://localhost:3306/xh_admin?characterEncoding=utf-8
+      username: root
       password: 123456
       configuration:
         maximum-pool-size: 20
@@ -51,7 +52,13 @@ xxl:
     accessToken: default_token
 
 minio:
-  endpoint: http://122.51.118.42:9000
+  endpoint: http://localhost:9000
   access-key: QEGiz63wnKckxgmvTwre
   secret-key: CoWs7QBrFjsEonoFjkOx9eQhZGfE74n9VlmVNMOM
   bucket: bucket1
+
+# springboot 3.4开始，可直接输出结构化日志
+logging:
+  structured:
+    format:
+      file: ecs
