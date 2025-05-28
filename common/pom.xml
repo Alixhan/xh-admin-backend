@@ -15,7 +15,6 @@
     <modules>
         <module>common-core</module>
         <module>common-jdbc</module>
-        <module>common-log</module>
         <module>common-swagger</module>
         <module>common-xxljob</module>
         <module>common-nacos</module>
