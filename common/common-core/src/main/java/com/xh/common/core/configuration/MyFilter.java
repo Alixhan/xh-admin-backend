@@ -80,7 +80,7 @@ public class MyFilter extends HttpFilter {
         SysLog sysLog = MyContext.getSysLog();
         ServletInputStream inputStream = request.getRequest().getInputStream();
         //如果文件流已读取则从缓存中获取请求体
-        if (Boolean.TRUE.equals(inputStream.isFinished())) {
+        if (inputStream.isFinished()) {
             sysLog.setRequestBody(request.getContentAsString());
         } else {
             // 否则直接从request中获取请求体
@@ -108,12 +108,12 @@ public class MyFilter extends HttpFilter {
                 .isHit();
         //设置指定匹配的或者出现报错的才记录日志
         if (hit || sysLog.getStackTrace() != null) {
-            final SaTokenContext saTokenContextOrSecond = SaManager.getSaTokenContextOrSecond();
+            final SaTokenContext saTokenContext = SaManager.getSaTokenContext();
             //异步存储请求的日志信息
             Mono.just(sysLog).subscribe(i -> {
                 // 因为会开启新线程，所以把上SaToken下文对象传递进来
-                if (saTokenContextOrSecond != null) {
-                    SaManager.setSaTokenContext(saTokenContextOrSecond);
+                if (saTokenContext != null) {
+                    SaManager.setSaTokenContext(saTokenContext);
                 }
                 commonService.saveSysLog(i);
             });

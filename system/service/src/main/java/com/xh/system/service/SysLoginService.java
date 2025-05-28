@@ -180,12 +180,14 @@ public class SysLoginService extends BaseServiceImpl {
             onlineUserDTO.setUserId(sysUser.getId());
             onlineUserDTO.setUserCode(sysUser.getCode());
             onlineUserDTO.setUserName(sysUser.getName());
-            onlineUserDTO.setLoginBrowser(ua.getBrowser().getName());
-            onlineUserDTO.setBrowserVersion(ua.getVersion());
+            if(ua != null) {
+                onlineUserDTO.setLoginBrowser(ua.getBrowser().getName());
+                onlineUserDTO.setBrowserVersion(ua.getVersion());
+                onlineUserDTO.setLoginBrowser(ua.getBrowser().getName());
+                onlineUserDTO.setLoginOs(ua.getOs().getName());
+                onlineUserDTO.setIsMobile(ua.isMobile());
+            }
             onlineUserDTO.setLoginIp(sysLog.getIp());
-            onlineUserDTO.setLoginBrowser(ua.getBrowser().getName());
-            onlineUserDTO.setLoginOs(ua.getOs().getName());
-            onlineUserDTO.setIsMobile(ua.isMobile());
             onlineUserDTO.setLoginAddress(sysLog.getIpAddress());
             onlineUserDTO.setLocale(locale);
             onlineUserDTO.setLocaleLabel(localeLabel);

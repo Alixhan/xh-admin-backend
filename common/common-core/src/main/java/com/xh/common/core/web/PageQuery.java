@@ -2,6 +2,7 @@ package com.xh.common.core.web;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.xh.common.core.utils.CommonUtil;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -51,10 +52,13 @@ public class PageQuery<T> {
     /**
      * 查询基础sql
      */
+    @Schema(hidden = true)
     private String baseSql;
+
     /**
      * 查询sql的占位符参数
      */
+    @Schema(hidden = true)
     private LinkedList<Object> args = new LinkedList<>();
 
     /**
@@ -67,10 +71,11 @@ public class PageQuery<T> {
     /**
      * 头部添加参数
      */
-    public void addFirst(Object... arg) {
+    public void addFirstArg(Object... arg) {
         this.args.addAll(0, Arrays.asList(arg));
     }
 
+    @Schema(hidden = true)
     public String getSql() {
         var whereCon = getWhereCon(this.filters);
         if (CommonUtil.isNotEmpty(whereCon)) whereCon = " where " + whereCon;
