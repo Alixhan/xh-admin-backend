@@ -4,9 +4,9 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.secure.BCrypt;
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.stp.parameter.SaLoginParameter;
 import cn.hutool.captcha.AbstractCaptcha;
 import cn.hutool.captcha.CaptchaUtil;
-import cn.hutool.http.Header;
 import cn.hutool.http.useragent.UserAgent;
 import cn.hutool.http.useragent.UserAgentUtil;
 import com.xh.common.core.Constant;
@@ -24,7 +24,6 @@ import com.xh.system.client.dto.ImageCaptchaDTO;
 import com.xh.system.client.entity.SysUser;
 import com.xh.system.client.vo.LoginUserInfoVO;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.ValueOperations;
@@ -52,7 +51,6 @@ public class SysLoginService extends BaseServiceImpl {
     @Resource
     private CommonService commonService;
 
-
     /**
      * 生成图形验证码
      */
@@ -71,13 +69,14 @@ public class SysLoginService extends BaseServiceImpl {
      * 管理端用户登录
      */
     @Transactional
-    public LoginUserInfoVO login(HttpServletRequest request, Map<String, Object> params) {
+    public LoginUserInfoVO login(Map<String, Object> params) {
         String username = CommonUtil.getString(params.get("username"));
         String password = CommonUtil.getString(params.get("password"));
         String captchaKey = CommonUtil.getString(params.get("captchaKey"));
         String captchaCode = CommonUtil.getString(params.get("captchaCode"));
         String locale = CommonUtil.getString(params.get("locale"));
         String localeLabel = CommonUtil.getString(params.get("localeLabel"));
+        String userAgent = CommonUtil.getString(params.get("USER_AGENT"));
 
         SaSession session = null;
         try {
@@ -156,13 +155,13 @@ public class SysLoginService extends BaseServiceImpl {
                 throw new MyException("该用户未分配角色，无法登录!");
             }
 
+            SaLoginParameter loginParameter = new SaLoginParameter();
+            loginParameter.setDeviceType("WEB");
             //如果账号不允许重复登录，则将已登录的强制下线
-            if (Boolean.FALSE.equals(sysUser.getAllowRepeat())) {
-                StpUtil.kickout(sysUser.getId(), "WEB");
-            }
-
+            loginParameter.setIsConcurrent(sysUser.getAllowRepeat());
             // 登录
-            StpUtil.login(sysUser.getId(), "WEB");
+            StpUtil.login(sysUser.getId(), loginParameter);
+
             session = StpUtil.getSession();
 
             // 刷新用户信息和权限缓存
@@ -173,7 +172,7 @@ public class SysLoginService extends BaseServiceImpl {
             loginUserInfoDTO.setRoles(roles);
             session.set(LoginUtil.SYS_USER_KEY, loginUserInfoDTO);
 
-            UserAgent ua = UserAgentUtil.parse(request.getHeader(Header.USER_AGENT.toString()));
+            UserAgent ua = UserAgentUtil.parse(userAgent);
             SysLog sysLog = MyContext.getSysLog();
             OnlineUserDTO onlineUserDTO = new OnlineUserDTO();
             onlineUserDTO.setToken(StpUtil.getTokenValue());
@@ -381,6 +380,8 @@ public class SysLoginService extends BaseServiceImpl {
 
     /**
      * 获取当前token的用户角色信息
+     *
+     * @param refresh 是否刷新缓存
      */
     private LoginUserInfoVO getCurrentLoginUserVO(Boolean refresh) {
         try {

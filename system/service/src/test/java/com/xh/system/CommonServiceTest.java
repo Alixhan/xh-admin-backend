@@ -27,13 +27,12 @@ public class CommonServiceTest {
     public void testGetPermissionSql() {
         SaTokenContextMockUtil.setMockContext(() -> {
             StpUtil.setTokenValueToStorage("test");
-            MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
             // 先模拟登录
             JSONObject params = new JSONObject();
             params.put("username", "admin");
             params.put("password", "admin123");
             params.put("isDemo", "1");
-            sysLoginService.login(mockHttpServletRequest, params);
+            sysLoginService.login(params);
 
             String permissionSql = commonService.getPermissionSql("sys_log", "create_by", "sys_role_id", "sys_org_id");
             log.error("权限sql: {}", permissionSql);

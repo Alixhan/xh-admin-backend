@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.dev33.satoken.annotation.SaMode;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.http.Header;
 import com.xh.common.core.dto.OnlineUserDTO;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
@@ -48,7 +49,8 @@ public class SysUserController {
     @Operation(description = "登录")
     @PostMapping("/login")
     public RestResponse<LoginUserInfoVO> login(HttpServletRequest request, @RequestBody Map<String, Object> params) {
-        return RestResponse.success(sysLoginService.login(request, params));
+        params.put("USER_AGENT", request.getHeader(Header.USER_AGENT.toString()));
+        return RestResponse.success(sysLoginService.login(params));
     }
 
     @Operation(description = "角色切换")
