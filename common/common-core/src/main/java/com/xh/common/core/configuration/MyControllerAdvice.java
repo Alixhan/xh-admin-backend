@@ -1,5 +1,8 @@
 package com.xh.common.core.configuration;
 
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotPermissionException;
+import cn.dev33.satoken.exception.NotRoleException;
 import cn.dev33.satoken.exception.SaTokenException;
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.web.MyContext;
@@ -33,38 +36,29 @@ public class MyControllerAdvice {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(SaTokenException.class)
     public RestResponse<?> handlerSaTokenException(SaTokenException e) {
-        RestResponse<?> res = RestResponse.error("服务器繁忙，请稍后重试...");
-        // 根据不同异常细分状态码返回不同的提示
-        if (e.getCode() == 11001) {
-            res.setMessage("用户未登录!");
-            res.setHttpCode(HttpStatus.UNAUTHORIZED.value());
-        }
-        if (e.getCode() == 11011) {
-            res.setMessage("未读到有效的token!");
-            res.setHttpCode(HttpStatus.UNAUTHORIZED.value());
-        }
-        if (e.getCode() == 11012) {
-            res.setHttpCode(HttpStatus.UNAUTHORIZED.value());
-            res.setMessage("登录状态已过期，请重新登录!");
-        }
-        if (e.getCode() == 11014) {
-            res.setHttpCode(HttpStatus.UNAUTHORIZED.value());
-            res.setMessage("用户在其他地方登录，已被顶下线！");
-        }
-        if (e.getCode() == 11015) {
-            res.setHttpCode(HttpStatus.UNAUTHORIZED.value());
-            res.setMessage("用户已在其他地方登录，或者被管理员踢下线！");
-        }
-        if (e.getCode() == 11016) {
-            res.setMessage("Token已被冻结！");
-        }
-        if (e.getCode() == 11041) {
-            res.setHttpCode(HttpStatus.FORBIDDEN.value());
-            res.setMessage("角色无权操作！");
-        }
-        if (e.getCode() == 11051) {
-            res.setHttpCode(HttpStatus.FORBIDDEN.value());
-            res.setMessage("权限不足，无法操作！");
+        RestResponse<?> res = new RestResponse<>();
+        switch (e) {
+            case NotLoginException ex -> {
+                var message = switch (ex.getType()) {
+                    case "-3" -> "登录已超时！";
+                    case "-4" -> "账号已在其他地方登录！";
+                    case "-5" -> "当前会话已被管理员踢下线！";
+                    case "-6" -> "token被冻结！";
+                    case "-7" -> "非法格式token！";
+                    default -> "会话未登录！";
+                };
+                res.setMessage(message);
+                res.setHttpCode(HttpStatus.UNAUTHORIZED.value());
+            }
+            case NotRoleException ignored -> {
+                res.setHttpCode(HttpStatus.FORBIDDEN.value());
+                res.setMessage("角色无权操作！");
+            }
+            case NotPermissionException ignored -> {
+                res.setHttpCode(HttpStatus.FORBIDDEN.value());
+                res.setMessage("权限不足，无法操作！");
+            }
+            default ->  res.setMessage("服务器繁忙，请稍后重试...");
         }
         return res;
     }
