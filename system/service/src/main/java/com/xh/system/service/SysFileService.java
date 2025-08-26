@@ -14,9 +14,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Headers;
-import org.bytedeco.javacv.FFmpegFrameGrabber;
-import org.bytedeco.javacv.Frame;
-import org.bytedeco.javacv.Java2DFrameConverter;
+//import org.bytedeco.javacv.FFmpegFrameGrabber;
+//import org.bytedeco.javacv.Frame;
+//import org.bytedeco.javacv.Java2DFrameConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.mock.web.MockMultipartFile;
@@ -385,32 +385,34 @@ public class SysFileService extends BaseServiceImpl {
      * 抽取视频的指定帧图片
      */
     public BufferedImage getVideoFrameImage(InputStream inputStream, int frameNum) {
-        try (inputStream; FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(inputStream)) {
-            grabber.start();
-            int ftp = grabber.getLengthInFrames();
-            int currentFrameNum = 0;
-            while (currentFrameNum <= ftp) {
-                //获取帧
-                try (Frame frame = grabber.grabImage()) {
-                    if ((currentFrameNum > frameNum) && (frame != null)) {
-                        try (Java2DFrameConverter a = new Java2DFrameConverter()) {
-                            BufferedImage image = a.convert(frame);
-                            frame.close();
-                            grabber.stop();
-                            grabber.release();
-                            return image;
-                        }
-                    }
-                }
-                currentFrameNum++;
-            }
-            return null;
-        } catch (Exception e) {
-            log.error("视频截取帧图片失败", e);
-            throw new MyException("视频截取帧图片失败");
-        } finally {
-            System.gc();
-        }
+        //注释此段代码，抽帧会集成opencv依赖，大部分用户用不上，导致打包体积过大，增加部署负担
+        return null;
+//        try (inputStream; FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(inputStream)) {
+//            grabber.start();
+//            int ftp = grabber.getLengthInFrames();
+//            int currentFrameNum = 0;
+//            while (currentFrameNum <= ftp) {
+//                //获取帧
+//                try (Frame frame = grabber.grabImage()) {
+//                    if ((currentFrameNum > frameNum) && (frame != null)) {
+//                        try (Java2DFrameConverter a = new Java2DFrameConverter()) {
+//                            BufferedImage image = a.convert(frame);
+//                            frame.close();
+//                            grabber.stop();
+//                            grabber.release();
+//                            return image;
+//                        }
+//                    }
+//                }
+//                currentFrameNum++;
+//            }
+//            return null;
+//        } catch (Exception e) {
+//            log.error("视频截取帧图片失败", e);
+//            throw new MyException("视频截取帧图片失败");
+//        } finally {
+//            System.gc();
+//        }
     }
 
 
