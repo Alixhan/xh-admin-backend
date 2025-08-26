@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper=false)
-public class DataPermissionEntityDTO<I> extends BaseDTO<I> {
+public class BaseDataPermissionDTO<I> extends BaseDTO<I> {
 
     @Schema(title = "机构ID")
     protected Integer sysOrgId;
