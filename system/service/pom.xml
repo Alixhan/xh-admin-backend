@@ -40,10 +40,10 @@
             <version>0.1.6</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>javacv-platform</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.bytedeco</groupId>-->
+<!--            <artifactId>javacv-platform</artifactId>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.xh</groupId>
