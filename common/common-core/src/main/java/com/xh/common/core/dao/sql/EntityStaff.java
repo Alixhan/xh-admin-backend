@@ -1,6 +1,6 @@
 package com.xh.common.core.dao.sql;
 
-import com.xh.common.core.dao.AutoSetFun;
+import com.xh.common.core.entity.AutoSetFun;
 import com.xh.common.core.dao.PersistenceType;
 import com.xh.common.core.entity.AutoSet;
 import com.xh.common.core.utils.CommonUtil;

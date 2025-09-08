@@ -1,6 +1,7 @@
-package com.xh.common.core.dao;
+package com.xh.common.core.entity;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.xh.common.core.dao.PersistenceType;
 import com.xh.common.core.dto.OnlineUserDTO;
 import com.xh.common.core.utils.LoginUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 执行持久化操作时，自动写入一下字段的默认值
+ * 执行持久化操作时，自动注入字段值
  * sunxh 2024/5/6
  */
 @Slf4j
@@ -132,7 +133,7 @@ public enum AutoSetFun {
         }
     }),
     /**
-     * 默认值为false
+     * 当字段值为null，默认值为false
      */
     DEFAULT_FALSE((persistenceType, field, object) -> {
         try {

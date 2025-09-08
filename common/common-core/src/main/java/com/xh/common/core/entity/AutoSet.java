@@ -1,7 +1,5 @@
 package com.xh.common.core.entity;
 
-import com.xh.common.core.dao.AutoSetFun;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

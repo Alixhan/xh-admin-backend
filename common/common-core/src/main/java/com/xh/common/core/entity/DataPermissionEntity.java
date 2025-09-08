@@ -1,6 +1,5 @@
 package com.xh.common.core.entity;
 
-import com.xh.common.core.dao.AutoSetFun;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;

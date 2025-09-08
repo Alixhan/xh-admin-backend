@@ -42,7 +42,7 @@ public class DataSourceConfiguration {
      * 第一数据源JdbcTemplate
      */
     @Primary
-    @Bean
+    @Bean("firstJdbcTemplate")
     public JdbcTemplate firstJdbcTemplate(@Qualifier("firstDataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
@@ -68,7 +68,7 @@ public class DataSourceConfiguration {
     /**
      * 第二数据源JdbcTemplate
      */
-    @Bean
+    @Bean("secondJdbcTemplate")
     public JdbcTemplate secondJdbcTemplate(@Qualifier("secondDataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }

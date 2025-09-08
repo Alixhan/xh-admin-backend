@@ -4,7 +4,6 @@ import com.xh.common.core.dao.sql.EntityStaff;
 import com.xh.common.core.dao.sql.MysqlExecutor;
 import com.xh.common.core.dao.sql.PostgreSqlExecutor;
 import com.xh.common.core.dao.sql.SqlExecutor;
-import com.xh.common.core.utils.WebLogs;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
 import jakarta.annotation.Resource;
@@ -40,13 +39,12 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
     }
 
     @Override
-    public <K> K findBySql(Class<K> clazz, String sql, Object... args) throws RuntimeException {
+    public <K> K findBySql(Class<K> clazz, String sql, Object... args){
         return findBySql(clazz, sql, primaryJdbcTemplate, args);
     }
 
     @Override
-    public <K> K findBySql(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args) throws RuntimeException {
-        WebLogs.sql(sql, args);
+    public <K> K findBySql(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args){
         SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
         sql = sqlExecutor.convertSql(sql);
         K obj = null;
@@ -66,7 +64,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
     public <K> List<K> findList(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args) {
         SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
         sql = sqlExecutor.convertSql(sql);
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<K>(clazz), args);
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(clazz), args);
     }
 
     @Override
