@@ -49,7 +49,11 @@ public class CommonService extends BaseServiceImpl {
                          a.sys_role_id role_id,b.*
                     from sys_role_menu a
                     left join sys_menu b on a.sys_menu_id = b.id
-                    where a.deleted is false and b.deleted is false and a.sys_role_id = ?
+                    where
+                        a.deleted is false
+                        and b.deleted is false
+                        and b.enabled is true
+                        and a.sys_role_id = ?
                     order by b.`order` asc
                 """;
         //查询角色拥有的所有菜单权限
