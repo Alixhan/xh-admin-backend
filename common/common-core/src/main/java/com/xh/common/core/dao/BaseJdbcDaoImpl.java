@@ -34,18 +34,18 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <K> K findById(Class<K> clazz, JdbcTemplate jdbcTemplate, Serializable id) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
+        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         return sqlExecutor.findById(jdbcTemplate, clazz, id);
     }
 
     @Override
-    public <K> K findBySql(Class<K> clazz, String sql, Object... args){
+    public <K> K findBySql(Class<K> clazz, String sql, Object... args) {
         return findBySql(clazz, sql, primaryJdbcTemplate, args);
     }
 
     @Override
-    public <K> K findBySql(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args){
-        SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
+    public <K> K findBySql(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args) {
+        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         sql = sqlExecutor.convertSql(sql);
         K obj = null;
         List<K> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(clazz), args);
@@ -62,7 +62,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <K> List<K> findList(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
+        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         sql = sqlExecutor.convertSql(sql);
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(clazz), args);
     }
@@ -80,7 +80,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
     @Override
     public <K> PageResult<K> query(Class<K> clazz, PageQuery<?> pageQuery, JdbcTemplate jdbcTemplate) {
         String sql = pageQuery.getSql();
-        SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
+        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         sql = sqlExecutor.convertSql(sql);
         PageResult<K> pageResult = new PageResult<>();
         if (pageQuery.getIsPage()) {
@@ -107,7 +107,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <E> void insert(JdbcTemplate jdbcTemplate, E[] entities) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
+        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         for (E entity : entities) {
             this.autoSet(PersistenceType.INSERT, entity);
         }
@@ -132,7 +132,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <E> void update(JdbcTemplate jdbcTemplate, E entity) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
+        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         this.autoSet(PersistenceType.UPDATE, entity);
         sqlExecutor.toUpdate(jdbcTemplate, entity);
     }
@@ -144,7 +144,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <E> void deleteById(Class<E> clazz, JdbcTemplate jdbcTemplate, Serializable id) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(this.getDbType(jdbcTemplate));
+        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         sqlExecutor.toDeleteById(jdbcTemplate, clazz, id);
     }
 
@@ -167,12 +167,19 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
         return dbType;
     }
 
-    private SqlExecutor getSqlExecutor(String dbType) {
+    @Override
+    public SqlExecutor getSqlExecutor(JdbcTemplate jdbcTemplate) {
+        var dbType = this.getDbType(jdbcTemplate);
         return switch (dbType) {
             case "MySQL" -> new MysqlExecutor();
             case "PostgreSQL" -> new PostgreSqlExecutor();
             default -> throw new RuntimeException("%s不支持".formatted(dbType));
         };
+    }
+
+    @Override
+    public SqlExecutor getSqlExecutor() {
+        return this.getSqlExecutor(primaryJdbcTemplate);
     }
 
     /**
