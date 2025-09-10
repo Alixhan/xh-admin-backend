@@ -3,22 +3,30 @@ package com.xh.common.core.service;
 import cn.dev33.satoken.stp.StpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.xh.common.core.Constant;
+import com.xh.common.core.dao.sql.EntityStaff;
+import com.xh.common.core.dto.DataPermissionsCheckDTO;
 import com.xh.common.core.dto.OnlineUserDTO;
 import com.xh.common.core.dto.RolePermissionsDTO;
 import com.xh.common.core.dto.SysMenuDTO;
 import com.xh.common.core.entity.SysLog;
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.utils.LoginUtil;
+import com.xh.common.core.web.MyException;
+import com.xh.common.core.web.NoDataPermissionException;
 import com.xh.common.core.web.RestResponse;
+import jakarta.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -111,15 +119,13 @@ public class CommonService extends BaseServiceImpl {
         OnlineUserDTO onlineUserDTO = LoginUtil.getOnlineUserInfo();
         if (onlineUserDTO != null) {
             var sql = """
-                       SELECT
-                       	min( b.expression ) as expression
-                       FROM sys_role_data_permission a
-                       LEFT JOIN sys_data_permission b ON a.sys_data_permission_id = b.id
-                       WHERE
-                       	a.sys_role_id = ? and a.sys_data_entity_id = ?
+                    SELECT min( b.expression ) as expression
+                    FROM sys_role_data_permission a
+                    LEFT JOIN sys_data_permission b ON a.sys_data_permission_id = b.id
+                    WHERE a.sys_role_id = ? and a.sys_data_entity_id = ?
                     """;
             String expression = primaryJdbcTemplate.queryForObject(sql, String.class, onlineUserDTO.getRoleId(), sysDataEntityId);
-            if (expression != null) {
+            if (CommonUtil.isNotEmpty(expression)) {
                 String regex = "(\\^)?(\\$[A-Z]+)(\\(([^)]+)\\))?";
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(expression);
@@ -211,7 +217,61 @@ public class CommonService extends BaseServiceImpl {
                 matcher.appendTail(permissionSql);
                 return "(%s)".formatted(permissionSql);
             }
+            // 权限表达式为空则说明是所有权限
+            return "";
         }
-        return "";
+        //如果角色未设置数据权限，抛出业务异常提醒维护角色数据权限
+        throw new MyException("当前角色未设置数据权限，无法访问数据，请联系管理员处理！");
+    }
+
+
+    /**
+     * 验证那些直接使用ID直接访问的数据是否在数据权限范围内
+     * 如无数据权限则会抛出异常
+     *
+     * @param sysDataEntityId 数据实体ID
+     * @param userColumn      用户id字段名
+     * @param roleColumn      角色id字段名
+     * @param orgColumn       机构id字段名
+     * @param clazz           实体类型
+     * @param ids             主键
+     * @throws NoDataPermissionException 无数据权限异常
+     */
+    public <K> void checkDataPermissionByIds(
+            String sysDataEntityId,
+            String userColumn,
+            String roleColumn,
+            String orgColumn,
+            Class<K> clazz,
+            Object... ids
+    ) throws NoDataPermissionException {
+        EntityStaff entityStaff = EntityStaff.init(clazz);
+        if (entityStaff.getIdColumns().isEmpty()) {
+            throw new PersistenceException("实体没有主键");
+        }
+        assert entityStaff.getIdColumns().peek() != null;
+        String idColumn = "`" + entityStaff.getIdColumns().peek().getColumnName() + "`";
+
+        String permissionSql = getPermissionSql(entityStaff.getTableName(), userColumn, roleColumn, orgColumn);
+        if (CommonUtil.isEmpty(permissionSql)) return; //无权限控制直接返回
+
+        var sql = "select %s as `result`, %s as `id` FROM `%s` WHERE %s in (:ids)".formatted(
+                permissionSql,
+                idColumn,
+                entityStaff.getTableName(),
+                idColumn
+        );
+        //转化一下sql
+        sql = baseJdbcDao.getSqlExecutor().convertSql(sql);
+
+        Map<String, Object> paramMap = new HashMap<>() {{
+            put("ids", List.of(ids));
+        }};
+        var res = primaryNPJdbcTemplate.query(sql, paramMap, new BeanPropertyRowMapper<>(DataPermissionsCheckDTO.class));
+        for (DataPermissionsCheckDTO item : res) {
+            if (item.getResult() != Boolean.TRUE) {
+                throw new NoDataPermissionException(sysDataEntityId, sql, JSON.toJSONString(paramMap));
+            }
+        }
     }
 }

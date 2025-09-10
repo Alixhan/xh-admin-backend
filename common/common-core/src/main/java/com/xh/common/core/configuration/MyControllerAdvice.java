@@ -7,6 +7,7 @@ import cn.dev33.satoken.exception.SaTokenException;
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.web.MyContext;
 import com.xh.common.core.web.MyException;
+import com.xh.common.core.web.NoDataPermissionException;
 import com.xh.common.core.web.RestResponse;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +36,7 @@ public class MyControllerAdvice {
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(SaTokenException.class)
-    public RestResponse<?> handlerSaTokenException(SaTokenException e) {
+    public RestResponse<?> handleNoDataPermissionException(SaTokenException e) {
         RestResponse<?> res = new RestResponse<>();
         switch (e) {
             case NotLoginException ex -> {
@@ -58,9 +59,17 @@ public class MyControllerAdvice {
                 res.setHttpCode(HttpStatus.FORBIDDEN.value());
                 res.setMessage("权限不足，无法操作！");
             }
-            default ->  res.setMessage("服务器繁忙，请稍后重试...");
+            default -> res.setMessage("服务器繁忙，请稍后重试...");
         }
         return res;
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(NoDataPermissionException.class)
+    public RestResponse<?> handleNoDataPermissionException(NoDataPermissionException e) {
+        log.error("越权访问数据", e);
+        MyContext.getSysLog().setStackTrace(CommonUtil.getThrowString(e));
+        return RestResponse.error("越权访问数据！");
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

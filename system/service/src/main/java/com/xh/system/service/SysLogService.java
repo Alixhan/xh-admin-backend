@@ -88,6 +88,11 @@ public class SysLogService extends BaseServiceImpl {
      */
     @Transactional(readOnly = true)
     public SysLog getById(Serializable id) {
+        // 校验数据权限是否满足
+        commonService.checkDataPermissionByIds(
+                "sys_log", "create_by", "sys_role_id", "sys_org_id",
+                SysLog.class, id
+        );
         SysLog sysLog = baseJdbcDao.findById(SysLog.class, id);
         if (sysLog.getCreateBy() != null) {
             SysUser sysUser = baseJdbcDao.findById(SysUser.class, sysLog.getCreateBy());
@@ -102,6 +107,11 @@ public class SysLogService extends BaseServiceImpl {
     @Transactional
     public void del(List<Integer> ids) {
         log.info("批量删除日志--");
+        // 校验数据权限是否满足
+        commonService.checkDataPermissionByIds(
+                "sys_log", "create_by", "sys_role_id", "sys_org_id",
+                SysLog.class, ids.toArray()
+        );
         String sql = "update sys_log set deleted = 1 where id in (:ids)";
         Map<String, Object> paramMap = new HashMap<>() {{
             put("ids", ids);
