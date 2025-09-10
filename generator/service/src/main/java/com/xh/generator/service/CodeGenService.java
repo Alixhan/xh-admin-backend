@@ -166,7 +166,7 @@ public class CodeGenService extends BaseServiceImpl {
      * 获取所有表信息
      */
     public List<TableMateDataVO> getTableList(String tableNamePattern) {
-        try (Connection connection = Objects.requireNonNull(primaryJdbcTemplate.getDataSource()).getConnection();) {
+        try (Connection connection = Objects.requireNonNull(primaryJdbcTemplate.getDataSource()).getConnection()) {
             DatabaseMetaData dbMetaData = connection.getMetaData();
             List<TableMateDataVO> tables = new ArrayList<>();
             String tableSchema = connection.getSchema();
@@ -573,7 +573,7 @@ public class CodeGenService extends BaseServiceImpl {
         }
     }
 
-    public void genSqlColStr(GenTableColumnDTO column, GenTableVO vo) {
+    public void genSqlColStr(GenTableColumnDTO column, GenTableVO ignore) {
         if (!Boolean.TRUE.equals(column.getIsVirtual())) {
             var colType = column.getColType();
             String sizeStr = Stream.of(column.getColumnSize(), column.getDecimalDigits()).map(CommonUtil::getString).filter(CommonUtil::isNotEmpty).collect(Collectors.joining(","));
