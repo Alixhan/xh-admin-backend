@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 @Getter
 @Setter
-public class DataPermissionEntity<I extends Serializable> extends BaseEntity<I> implements Serializable {
+public class BaseDataPermissionEntity<I extends Serializable> extends BaseEntity<I> implements Serializable {
 
     @Schema(title = "机构ID")
     @AutoSet(AutoSetFun.CURRENT_ORG)

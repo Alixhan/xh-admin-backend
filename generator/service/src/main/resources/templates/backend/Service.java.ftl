@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 </#if>
 
-import java.io.Serializable;
 <#if hasImport>
 import java.util.ArrayList;
 </#if>
@@ -105,6 +104,13 @@ public class ${serviceName} extends BaseServiceImpl {
      */
     @Transactional(readOnly = true)
     public ${entityName} getById(${idJavaType} id) {
+    <#if isDataPermission!false>
+        // 校验数据权限是否满足
+        commonService.checkDataPermissionByIds(
+            "sys_log", "create_by", "sys_role_id", "sys_org_id",
+            ${entityName}.class, id
+        );
+    </#if>
         return baseJdbcDao.findById(${entityName}.class, id);
     }
 
@@ -114,6 +120,13 @@ public class ${serviceName} extends BaseServiceImpl {
     @Transactional
     public void del(List<${idJavaType}> ids) {
         log.info("批量删除${name}--");
+    <#if isDataPermission!false>
+        // 校验数据权限是否满足
+        commonService.checkDataPermissionByIds(
+            "sys_log", "create_by", "sys_role_id", "sys_org_id",
+            ${entityName}.class, ids.toArray()
+        );
+    </#if>
         <#if extend??>
         String sql = "update ${tableName} set deleted = 1 where ${idProp} in (:ids)";
         <#else>

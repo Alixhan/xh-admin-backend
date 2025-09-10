@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
  */
 @Schema(title = "${name}")
 @Data
-public class ${dtoName}${dtoExtendClass!''} {
+public class ${dtoName}${dtoExtendClassStr!''} {
 <#list columns as field>
 <#if !(field.isExtend!false)>
 

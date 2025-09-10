@@ -3,7 +3,9 @@ package com.xh.generator.service;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.google.common.base.CaseFormat;
+import com.xh.common.core.dao.sql.EntityStaff;
 import com.xh.common.core.dto.OnlineUserDTO;
+import com.xh.common.core.entity.BaseEntity;
 import com.xh.common.core.service.BaseServiceImpl;
 import com.xh.common.core.utils.CommonUtil;
 import com.xh.common.core.utils.LoginUtil;
@@ -211,7 +213,7 @@ public class CodeGenService extends BaseServiceImpl {
             }
         }
         for (GenCodeResult result : results) {
-            if(!Boolean.TRUE.equals(result.getExecute())) continue;
+            if (!Boolean.TRUE.equals(result.getExecute())) continue;
             if ("sql".equals(result.getType())) {
                 primaryJdbcTemplate.execute(result.getCode());
             } else {
@@ -315,7 +317,7 @@ public class CodeGenService extends BaseServiceImpl {
             List<TableMateDataVO> tableList = getTableList(vo.getTableName());
             if (!tableList.isEmpty() && "1".equals(vo.getDesignType())) {
                 genCodeResult.setErrorMsg("数据表 %s 已存在！".formatted(vo.getTableName()));
-            }else if ("2".equals(vo.getDesignType())) {
+            } else if ("2".equals(vo.getDesignType())) {
                 genCodeResult.setExecute(false);
             }
             genCodeResult.setFileName("createTable.sql");
@@ -380,8 +382,10 @@ public class CodeGenService extends BaseServiceImpl {
         vo.setEntityPackage(packageFormat.formatted("client.entity"));
         vo.setEntityVarName(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, vo.getEntityName()));
         if (CommonUtil.isNotEmpty(vo.getExtend())) {
-            vo.setEntityExtendClass(" extends %s<Integer>".formatted(vo.getExtend()));
-            vo.setDtoExtendClass(" extends %sDTO<Integer>".formatted(vo.getExtend()));
+            vo.setExtendEntityName(vo.getExtend() + "Entity");
+            vo.setExtendEntityClassName("com.xh.common.core.entity.%s".formatted(vo.getExtendEntityName()));
+            vo.setEntityExtendClassStr(" extends %s<Integer>".formatted(vo.getExtendEntityName()));
+            vo.setDtoExtendClassStr(" extends %sDTO<Integer>".formatted(vo.getExtend()));
         }
         vo.setServicePackage(packageFormat.formatted("service"));
         vo.setServiceName(vo.getEntityName() + "Service");
@@ -402,7 +406,7 @@ public class CodeGenService extends BaseServiceImpl {
         vo.setMappingPath(Stream.of("/api", vo.getService(), vo.getModule(), vo.getEntityVarName()).filter(CommonUtil::isNotEmpty).collect(Collectors.joining("/")));
         vo.setApiPath("@" + vo.getMappingPath());
         vo.setIndexViewPath(Stream.of("/src/views", vo.getService(), vo.getModule(), vo.getEntityVarName(), "index.vue").filter(CommonUtil::isNotEmpty).collect(Collectors.joining("/")));
-        this.genColumns(vo);
+        this.addExtendColumns(vo);
         vo.getColumns().stream().filter(i -> Boolean.TRUE.equals(i.getPrimaryKey()))
                 .findFirst().ifPresent(colDTO -> {
                     vo.setOrderBy(" order by %s desc ".formatted(colDTO.getColumnName()));
@@ -427,44 +431,43 @@ public class CodeGenService extends BaseServiceImpl {
     }
 
     /**
-     * 如果继承了基础实体类，则需要添加这些基础列
+     * 如果继承了基础实体类，则需要添加继承而来的字段
      */
-    public void genColumns(GenTableVO vo) {
+    public void addExtendColumns(GenTableVO vo) {
         var columns = vo.getColumns();
         if (CommonUtil.isNotEmpty(vo.getExtend())) {
-            if (columns.stream().noneMatch(i -> "id".equals(i.getColumnName()))) {
-                var col = new GenTableColumnDTO("number", "id", "ID", true, "auto", "id", "int", "ID", false, true, true, "Integer", null, true);
-                columns.addFirst(col);
-            }
-            if ("DataPermissionEntity".equals(vo.getExtend())) {
-                if (columns.stream().noneMatch(i -> "sys_org_id".equals(i.getColumnName()))) {
-                    var col = new GenTableColumnDTO("number", "sysOrgId", "机构ID", null, null, "sys_org_id", "int", "机构ID", false, null, null, "Integer", null, true);
-                    columns.addLast(col);
+            try {
+                Class<?> extentClass = Class.forName(vo.getExtendEntityClassName());
+                Deque<EntityStaff.EntityColumnStaff> extendCols = EntityStaff.getColumns(extentClass);
+                while (!extendCols.isEmpty()) {
+                    EntityStaff.EntityColumnStaff extendCol = extendCols.poll();
+                    //不存在时添加继承的列
+                    if (columns.stream().noneMatch(i -> extendCol.getColumnName().equals(i.getColumnName()))) {
+                        String title = Optional.of(extendCol.getTitle()).orElse(extendCol.getFieldName());
+                        var col = new GenTableColumnDTO();
+                        col.setProp(extendCol.getFieldName());
+                        col.setLabel(title);
+                        col.setPrimaryKey(extendCol.getIsId());
+                        col.setPrimaryKeyType(extendCol.getIsId() == Boolean.TRUE ? "auto" : null);
+                        col.setColumnName(extendCol.getColumnName());
+                        col.setColType(null);
+                        col.setRemarks(title);
+                        col.setIsQuery(true);
+                        col.setIsTable(true);
+                        col.setIsExport(true);
+                        col.setIsExtend(true);
+                        col.setIsForm(true);
+                        setTypeByJavaField(col, extendCol);
+                        //主键放在最前面
+                        if (col.getPrimaryKey() == Boolean.TRUE) {
+                            columns.addFirst(col);
+                        } else {
+                            columns.addLast(col);
+                        }
+                    }
                 }
-                if (columns.stream().noneMatch(i -> "sys_role_id".equals(i.getColumnName()))) {
-                    var col = new GenTableColumnDTO("number", "sysRoleId", "角色ID", null, null, "sys_role_id", "int", "角色ID", false, null, null, "Integer", null, true);
-                    columns.addLast(col);
-                }
-            }
-            if (columns.stream().noneMatch(i -> "create_time".equals(i.getColumnName()))) {
-                var col = new GenTableColumnDTO("datetime", "createTime", "创建时间", false, null, "create_time", "datetime", "创建时间", true, true, true, "LocalDateTime", null, true);
-                columns.addLast(col);
-            }
-            if (columns.stream().noneMatch(i -> "update_time".equals(i.getColumnName()))) {
-                var col = new GenTableColumnDTO("datetime", "updateTime", "修改时间", false, null, "update_time", "datetime", "修改时间", false, false, false, "LocalDateTime", null, true);
-                columns.addLast(col);
-            }
-            if (columns.stream().noneMatch(i -> "create_by".equals(i.getColumnName()))) {
-                var col = new GenTableColumnDTO("number", "createBy", "创建人", false, null, "create_by", "int", "创建人", true, true, true, "Integer", null, true);
-                columns.addLast(col);
-            }
-            if (columns.stream().noneMatch(i -> "update_by".equals(i.getColumnName()))) {
-                var col = new GenTableColumnDTO("number", "updateBy", "修改人", false, null, "update_by", "int", "修改人", false, false, false, "Integer", null, true);
-                columns.addLast(col);
-            }
-            if (columns.stream().noneMatch(i -> "deleted".equals(i.getColumnName()))) {
-                var col = new GenTableColumnDTO("select", "deleted", "是否已删除", false, null, "deleted", "bit", "是否已删除", false, false, null, "Boolean", 1, true);
-                columns.addLast(col);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -581,6 +584,60 @@ public class CodeGenService extends BaseServiceImpl {
                 if ("auto".equals(column.getPrimaryKeyType())) str += " auto_increment";
             }
             column.setSqlColStr(str);
+        }
+    }
+
+
+    /**
+     * 根据javaType设置formType和colType
+     */
+    public void setTypeByJavaField(GenTableColumnDTO col, EntityStaff.EntityColumnStaff columnStaff) {
+        Class<?> type = columnStaff.getField().getType();
+        String simpleName = type.getSimpleName();
+        col.setJavaType(simpleName);
+        if (col.getPrimaryKey() == Boolean.TRUE) {
+            Class<?> clazz = columnStaff.getField().getDeclaringClass();
+            //如果是主键，判断是否是来源于BaseEntity，是则设为主键类型默认为Integer
+            if (clazz == BaseEntity.class) {
+                col.setJavaType("Integer");
+            }
+        }
+        switch (col.getJavaType()) {
+            case "Integer":
+                col.setFormType("int");
+                col.setColType("INT");
+                break;
+            case "Long":
+                col.setFormType("number");
+                col.setColType("BIGINT");
+                break;
+            case "Double":
+                col.setFormType("double");
+                col.setColType("DOUBLE");
+                break;
+            case "BigDecimal":
+                col.setFormType("number");
+                col.setColType("DECIMAL");
+                break;
+            case "LocalDateTime":
+                col.setFormType("datetime");
+                col.setColType("DATETIME");
+                break;
+            case "LocalDate":
+                col.setFormType("date");
+                col.setColType("DATE");
+                break;
+            case "LocalTime":
+                col.setFormType("time");
+                col.setColType("TIME");
+                break;
+            case "Boolean":
+                col.setFormType("switch");
+                col.setColType("BIT");
+                break;
+            default:
+                col.setFormType("text");
+                col.setColType("VARCHAR");
         }
     }
 

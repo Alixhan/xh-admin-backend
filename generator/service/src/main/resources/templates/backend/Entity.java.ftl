@@ -1,7 +1,7 @@
 package ${entityPackage};
 
 <#if extend??>
-import com.xh.common.core.entity.${extend};
+import ${extendEntityClassName};
 </#if>
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -27,10 +27,11 @@ import java.time.LocalDateTime;
  * @author ${author}
  * @since ${date}
  */
+@EqualsAndHashCode(callSuper = true)
 @Schema(title = "${name}")
 @Table(name = "${tableName}")
 @Data
-public class ${entityName}${entityExtendClass!''} {
+public class ${entityName}${entityExtendClassStr!''} {
 <#list columns as field>
 <#if !(field.isVirtual!false) && !(field.isExtend!false)>
 

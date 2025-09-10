@@ -1,6 +1,6 @@
 package com.xh.system.client.entity;
 
-import com.xh.common.core.entity.DataPermissionEntity;
+import com.xh.common.core.entity.BaseDataPermissionEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @Schema(title = "系统文件")
 @EqualsAndHashCode(callSuper = true)
-public class SysFile extends DataPermissionEntity<Integer> {
+public class SysFile extends BaseDataPermissionEntity<Integer> {
 
     @Schema(title = "对象存储key")
     private String object;

@@ -95,21 +95,4 @@ public class GenTableColumnDTO extends BaseDTO<Integer> {
 
     @Schema(title = "sql列")
     private String sqlColStr;
-
-    public GenTableColumnDTO(String formType, String prop, String label, Boolean primaryKey, String primaryKeyType, String columnName, String colType, String remarks, Boolean isQuery, Boolean isTable, Boolean isExport, String javaType, Integer columnSize, Boolean isExtend) {
-        this.formType = formType;
-        this.prop = prop;
-        this.label = label;
-        this.primaryKey = primaryKey;
-        this.primaryKeyType = primaryKeyType;
-        this.columnName = columnName;
-        this.colType = colType;
-        this.remarks = remarks;
-        this.isQuery = isQuery;
-        this.isTable = isTable;
-        this.isExport = isExport;
-        this.javaType = javaType;
-        this.columnSize = columnSize;
-        this.isExtend = isExtend;
-    }
 }

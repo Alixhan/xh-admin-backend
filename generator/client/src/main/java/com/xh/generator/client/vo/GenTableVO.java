@@ -55,8 +55,14 @@ public class GenTableVO {
     @Schema(title = "实体字段名称")
     private String entityVarName;
 
-    @Schema(title = "实体继承类")
-    private String entityExtendClass;
+    @Schema(title = "继承基础类名")
+    private String extendEntityName;
+
+    @Schema(title = "继承基础类名(包名+类名)")
+    private String extendEntityClassName;
+
+    @Schema(title = "实体继承基础类字符串")
+    private String entityExtendClassStr;
 
     @Schema(title = "service包名")
     private String servicePackage;
@@ -80,7 +86,7 @@ public class GenTableVO {
     private String dtoVarName;
 
     @Schema(title = "dto继承类")
-    private String dtoExtendClass;
+    private String dtoExtendClassStr;
 
     @Schema(title = "查询方法名")
     private String queryFun;
