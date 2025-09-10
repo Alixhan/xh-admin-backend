@@ -119,12 +119,17 @@ public class CommonService extends BaseServiceImpl {
         OnlineUserDTO onlineUserDTO = LoginUtil.getOnlineUserInfo();
         if (onlineUserDTO != null) {
             var sql = """
-                    SELECT min( b.expression ) as expression
+                    SELECT b.expression
                     FROM sys_role_data_permission a
                     LEFT JOIN sys_data_permission b ON a.sys_data_permission_id = b.id
                     WHERE a.sys_role_id = ? and a.sys_data_entity_id = ?
                     """;
-            String expression = primaryJdbcTemplate.queryForObject(sql, String.class, onlineUserDTO.getRoleId(), sysDataEntityId);
+            List<Map<String, Object>> list = primaryJdbcTemplate.queryForList(sql, onlineUserDTO.getRoleId(), sysDataEntityId);
+            if(list.isEmpty()) {
+                //如果角色未设置数据权限，抛出业务异常提醒维护角色数据权限
+                throw new MyException("当前角色未设置数据权限，无法访问数据，请联系管理员处理！");
+            }
+            String expression = CommonUtil.getString(list.getFirst().get("expression"));
             if (CommonUtil.isNotEmpty(expression)) {
                 String regex = "(\\^)?(\\$[A-Z]+)(\\(([^)]+)\\))?";
                 Pattern pattern = Pattern.compile(regex);
@@ -217,11 +222,8 @@ public class CommonService extends BaseServiceImpl {
                 matcher.appendTail(permissionSql);
                 return "(%s)".formatted(permissionSql);
             }
-            // 权限表达式为空则说明是所有权限
-            return "";
         }
-        //如果角色未设置数据权限，抛出业务异常提醒维护角色数据权限
-        throw new MyException("当前角色未设置数据权限，无法访问数据，请联系管理员处理！");
+        return "";
     }
 
 
