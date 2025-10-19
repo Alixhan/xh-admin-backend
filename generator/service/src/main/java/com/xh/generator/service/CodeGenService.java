@@ -409,7 +409,7 @@ public class CodeGenService extends BaseServiceImpl {
         this.addExtendColumns(vo);
         vo.getColumns().stream().filter(i -> Boolean.TRUE.equals(i.getPrimaryKey()))
                 .findFirst().ifPresent(colDTO -> {
-                    vo.setOrderBy(" order by %s desc ".formatted(colDTO.getColumnName()));
+                    vo.setOrderBy(" order by a.%s desc ".formatted(colDTO.getColumnName()));
                     vo.setIdProp(colDTO.getProp());
                     vo.setIdJavaType(colDTO.getJavaType());
                 });
