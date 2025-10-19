@@ -50,7 +50,7 @@ public class ${serviceName} extends BaseServiceImpl {
         Map<String, Object> param = pageQuery.getParam();
         if (param == null) param = new HashMap<>();
 
-        String sql = "select * from ${tableName} where 1=1<#if extend??> and deleted is false</#if> ";
+        String sql = "select * from ${tableName} a where 1=1<#if extend??> and a.deleted is false</#if> ";
 
     <#list columns as field>
     <#if field.isQuery!false>
@@ -63,7 +63,7 @@ public class ${serviceName} extends BaseServiceImpl {
 
     <#if isDataPermission!false>
         // 数据权限
-        String permissionSql = commonService.getPermissionSql("${tableName}", "create_by", "sys_role_id", "sys_org_id");
+        String permissionSql = commonService.getPermissionSql("${tableName}", "a.create_by", "a.sys_role_id", "a.sys_org_id");
         if (CommonUtil.isNotEmpty(permissionSql)) {
             sql += " and %s".formatted(permissionSql);
         }

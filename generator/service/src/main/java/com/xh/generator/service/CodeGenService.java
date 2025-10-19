@@ -475,8 +475,8 @@ public class CodeGenService extends BaseServiceImpl {
     public void genQueryColStr(GenTableColumnDTO col, GenTableVO vo) {
         if (Boolean.TRUE.equals(col.getIsQuery())) {
             var querySql = switch (col.getJavaType()) {
-                case "String" -> " and " + col.getColumnName() + " like '%' ? '%'";
-                default -> "and " + col.getColumnName() + " = ?";
+                case "String" -> " and a." + col.getColumnName() + " like '%' ? '%'";
+                default -> "and a." + col.getColumnName() + " = ?";
             };
             col.setQuerySql(querySql);
 
