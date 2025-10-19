@@ -50,7 +50,7 @@ public class ${serviceName} extends BaseServiceImpl {
         Map<String, Object> param = pageQuery.getParam();
         if (param == null) param = new HashMap<>();
 
-        String sql = "select * from ${tableName} a where 1=1<#if extend??> and a.deleted is false</#if> ";
+        String sql = "select a.* from ${tableName} a where 1=1<#if extend??> and a.deleted is false</#if> ";
 
     <#list columns as field>
     <#if field.isQuery!false>
