@@ -3,12 +3,14 @@ package com.xh.common.core.dao.sql;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.PersistenceException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +22,12 @@ import java.util.stream.Collectors;
  * @author sunxh
  * @since 2024/12/6
  */
+@Slf4j
 public class MysqlExecutor implements SqlExecutor {
 
     @Override
-    public <E> void toInsert(JdbcTemplate jdbcTemplate, E[] entity) {
-        EntityStaff entityStaff = EntityStaff.init(entity[0].getClass());
+    public <E> void toInsert(JdbcTemplate jdbcTemplate, E[] entitys) {
+        EntityStaff entityStaff = EntityStaff.init(entitys[0].getClass());
         String columnStr = entityStaff.getColumns().stream()
                 .map(EntityStaff.EntityColumnStaff::getColumnName)
                 .collect(Collectors.joining("`,`", "`", "`"));
@@ -40,7 +43,7 @@ public class MysqlExecutor implements SqlExecutor {
                 .collect(Collectors.joining(","));
         String sql = "INSERT INTO `%s` (%s) VALUES (%s)".formatted(entityStaff.getTableName(), columnStr, valueStr);
 
-        BeanPropertySqlParameterSource[] args = Arrays.stream(entity).map(BeanPropertySqlParameterSource::new)
+        BeanPropertySqlParameterSource[] args = Arrays.stream(entitys).map(BeanPropertySqlParameterSource::new)
                 .toArray(BeanPropertySqlParameterSource[]::new);
 
         GeneratedKeyHolder generatedKeyHolder = new GeneratedKeyHolder();
@@ -49,8 +52,16 @@ public class MysqlExecutor implements SqlExecutor {
         List<Map<String, Object>> keyList = generatedKeyHolder.getKeyList();
         for (int i = 0; i < keyList.size(); i++) {
             for (EntityStaff.EntityColumnStaff idColumn : entityStaff.getIdColumns()) {
-                var val = keyList.get(i).get(idColumn.getColumnName());
-                idColumn.setFieldValue(entity[i], val);
+                Map<String, Object> keyMap = keyList.get(i);
+                var val = (BigInteger) keyMap.get("GENERATED_KEY");
+                if (val == null) val = (BigInteger) keyMap.get(idColumn.getColumnName());
+                if (val != null) {
+                    try {
+                        idColumn.setFieldValue(entitys[i], val.intValue());
+                    } catch (Exception e) {
+                        log.error("设置主键错误", e);
+                    }
+                }
             }
         }
     }
