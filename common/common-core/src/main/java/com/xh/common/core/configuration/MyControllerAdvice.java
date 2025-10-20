@@ -38,6 +38,7 @@ public class MyControllerAdvice {
     @ExceptionHandler(SaTokenException.class)
     public RestResponse<?> handleNoDataPermissionException(SaTokenException e) {
         RestResponse<?> res = new RestResponse<>();
+        res.setStatus("waining");
         switch (e) {
             case NotLoginException ex -> {
                 var message = switch (ex.getType()) {
