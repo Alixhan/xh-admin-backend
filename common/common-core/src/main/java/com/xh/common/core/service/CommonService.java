@@ -101,6 +101,14 @@ public class CommonService extends BaseServiceImpl {
                 RestResponse<?> restResponse = JSON.parseObject(responseBody, RestResponse.class);
                 sysLog.setStatus(restResponse.getStatus());
             }
+            // 截取，最多存储1000个字符
+            String requestBody = sysLog.getRequestBody();
+            if (requestBody != null) {
+                sysLog.setRequestBody(requestBody.substring(Math.min(requestBody.length(), 1000)));
+            }
+            if (responseBody != null) {
+                sysLog.setResponseBody(responseBody.substring(Math.min(responseBody.length(), 1000)));
+            }
         } catch (Exception e) {
             log.error("存储日志异常", e);
         }
@@ -125,7 +133,7 @@ public class CommonService extends BaseServiceImpl {
                     WHERE a.sys_role_id = ? and a.sys_data_entity_id = ?
                     """;
             List<Map<String, Object>> list = primaryJdbcTemplate.queryForList(sql, onlineUserDTO.getRoleId(), sysDataEntityId);
-            if(list.isEmpty()) {
+            if (list.isEmpty()) {
                 //如果角色未设置数据权限，抛出业务异常提醒维护角色数据权限
                 throw new MyException("当前角色未设置数据权限，无法访问数据，请联系管理员处理！");
             }
