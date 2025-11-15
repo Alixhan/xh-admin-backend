@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 public class OnlineUserDTO implements Serializable {
     @Schema(title = "token")
     private String token;
+    @Schema(title = "设备类型")
+    private String deviceType;
     @Schema(title = "登录用户ID")
     private Integer userId;
     @Schema(title = "登录账户")

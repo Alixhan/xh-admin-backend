@@ -176,6 +176,7 @@ public class SysLoginService extends BaseServiceImpl {
             SysLog sysLog = MyContext.getSysLog();
             OnlineUserDTO onlineUserDTO = new OnlineUserDTO();
             onlineUserDTO.setToken(StpUtil.getTokenValue());
+            onlineUserDTO.setDeviceType(loginParameter.getDeviceType());
             onlineUserDTO.setUserId(sysUser.getId());
             onlineUserDTO.setUserCode(sysUser.getCode());
             onlineUserDTO.setUserName(sysUser.getName());
