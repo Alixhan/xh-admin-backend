@@ -104,10 +104,10 @@ public class CommonService extends BaseServiceImpl {
             // 截取，最多存储1000个字符
             String requestBody = sysLog.getRequestBody();
             if (requestBody != null) {
-                sysLog.setRequestBody(requestBody.substring(Math.min(requestBody.length(), 1000)));
+                sysLog.setRequestBody(requestBody.substring(0, Math.min(requestBody.length(), 1000)));
             }
             if (responseBody != null) {
-                sysLog.setResponseBody(responseBody.substring(Math.min(responseBody.length(), 1000)));
+                sysLog.setResponseBody(responseBody.substring(0, Math.min(responseBody.length(), 1000)));
             }
         } catch (Exception e) {
             log.error("存储日志异常", e);
