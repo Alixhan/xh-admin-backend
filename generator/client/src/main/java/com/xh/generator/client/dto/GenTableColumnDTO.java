@@ -79,7 +79,7 @@ public class GenTableColumnDTO extends BaseDTO<Integer> {
     private String javaType;
 
     @Schema(title = "简易查询sql")
-    private String querySql;
+    private List<QuerySql> querySql;
 
     @Schema(title = "列表列")
     private String tableColStr;
@@ -95,4 +95,13 @@ public class GenTableColumnDTO extends BaseDTO<Integer> {
 
     @Schema(title = "sql列")
     private String sqlColStr;
+
+    @Data
+    public static class QuerySql {
+        @Schema(title = "字段prop")
+        private String prop;
+
+        @Schema(title = "查询sql")
+        private String sql;
+    }
 }

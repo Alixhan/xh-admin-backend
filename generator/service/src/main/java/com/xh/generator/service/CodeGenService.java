@@ -474,16 +474,47 @@ public class CodeGenService extends BaseServiceImpl {
 
     public void genQueryColStr(GenTableColumnDTO col, GenTableVO vo) {
         if (Boolean.TRUE.equals(col.getIsQuery())) {
-            var querySql = switch (col.getJavaType()) {
-                case "String" -> " and a." + col.getColumnName() + " like '%' ? '%'";
+            var querySql = new ArrayList<GenTableColumnDTO.QuerySql>();
+            var sql = switch (col.getJavaType()) {
+                case "String" -> "and a." + col.getColumnName() + " like '%' ? '%'";
                 default -> "and a." + col.getColumnName() + " = ?";
             };
-            col.setQuerySql(querySql);
+            var queryCol = new GenTableColumnDTO.QuerySql();
+            queryCol.setProp(col.getProp());
+            queryCol.setSql(sql);
+            querySql.add(queryCol);
 
             JSONObject json = new JSONObject();
             json.put("prop", col.getProp());
             json.put("label", col.getLabel());
-            if (Arrays.asList("date", "datetime", "number", "rate").contains(col.getFormType())) {
+            if (Arrays.asList("date", "datetime").contains(col.getFormType())) {
+                String propStart = col.getProp() + "Start";
+                String propEnd = col.getProp() + "End";
+                json.put("type", col.getFormType() + "range");
+                json.put("prop", propStart);
+                json.put("prop2", propEnd);
+                json.put("single", true);
+                
+                // 清空原有查询条件
+                querySql.clear();
+                
+                //范围查询起
+                var queryCol1 = new GenTableColumnDTO.QuerySql();
+                queryCol1.setProp(propStart);
+                queryCol1.setSql("and a." + col.getColumnName() + " >= ?");
+                querySql.add(queryCol1);
+
+                //范围查询止
+                var queryCol2 = new GenTableColumnDTO.QuerySql();
+                queryCol2.setProp(propEnd);
+                if("date".equals(col.getFormType())) {
+                    queryCol2.setSql("and date_sub(a." + col.getColumnName() + ", interval 1 day) <= ?");
+                }else {
+                    queryCol2.setSql("and a." + col.getColumnName() + " <= ?");
+                }
+                querySql.add(queryCol2);
+            }
+            if (Arrays.asList("number", "rate").contains(col.getFormType())) {
                 json.put("type", col.getFormType());
             }
             if (Arrays.asList("radio-group", "checkbox-group", "select").contains(col.getFormType())) {
@@ -492,7 +523,7 @@ public class CodeGenService extends BaseServiceImpl {
                 vo.getHasDict().add("index");
             }
             this.transition(col, json);
-            this.genRules(col, json, "query");
+            col.setQuerySql(querySql);
             col.setQueryColStr(this.genColCode(json));
         }
     }

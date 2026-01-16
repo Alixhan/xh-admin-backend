@@ -54,10 +54,12 @@ public class ${serviceName} extends BaseServiceImpl {
 
     <#list columns as field>
     <#if field.isQuery!false>
-        if (CommonUtil.isNotEmpty(param.get("${field.prop}"))) {
-            sql += " ${field.querySql}";
-            pageQuery.addArg(param.get("${field.prop}"));
+    <#list field.querySql as queryCol>
+        if (CommonUtil.isNotEmpty(param.get("${queryCol.prop}"))) {
+            sql += " ${queryCol.sql}";
+            pageQuery.addArg(param.get("${queryCol.prop}"));
         }
+    </#list>
     </#if>
     </#list>
 
