@@ -12,6 +12,7 @@
       selection="multiple"
       @selection-change="(rows) => (selectRows = rows)"
       v-model:data="data"
+      persist-layout-key="${permissionPrefix}:index"
     >
       <template #right-action>
       <#if hasImport>
