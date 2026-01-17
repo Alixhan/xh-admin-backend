@@ -1,5 +1,6 @@
 package com.xh.common.core.dao;
 
+import com.xh.common.core.dao.sql.ColumnPicker;
 import com.xh.common.core.dao.sql.SqlExecutor;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
@@ -134,7 +135,15 @@ public interface BaseJdbcDao {
      *
      * @param entity 实体数据
      */
-    <E> void update(E entity);
+    <E> int update(E entity);
+
+    /**
+     * 更新单条实体数据，默认主数据源，可选取列更新
+     *
+     * @param entity 实体数据
+     * @param columnPicker 列选取器
+     */
+    <E> int update(E entity, ColumnPicker columnPicker);
 
     /**
      * 更新单条实体数据，可指定数据源
@@ -142,7 +151,16 @@ public interface BaseJdbcDao {
      * @param jdbcTemplate 数据源
      * @param entity       实体数据
      */
-    <E> void update(JdbcTemplate jdbcTemplate, E entity);
+    <E> int update(JdbcTemplate jdbcTemplate, E entity);
+
+    /**
+     * 更新单条实体数据，可指定数据源，可选取列更新
+     *
+     * @param jdbcTemplate 数据源
+     * @param entity       实体数据
+     * @param columnPicker 列选取器
+     */
+    <E> int update(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker);
 
     /**
      * 通过主键删除数据（物理删除），默认主数据源

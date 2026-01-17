@@ -1,9 +1,6 @@
 package com.xh.common.core.dao;
 
-import com.xh.common.core.dao.sql.EntityStaff;
-import com.xh.common.core.dao.sql.MysqlExecutor;
-import com.xh.common.core.dao.sql.PostgreSqlExecutor;
-import com.xh.common.core.dao.sql.SqlExecutor;
+import com.xh.common.core.dao.sql.*;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
 import jakarta.annotation.Resource;
@@ -126,15 +123,25 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
     }
 
     @Override
-    public <E> void update(E entity) {
-        update(primaryJdbcTemplate, entity);
+    public <E> int update(E entity) {
+        return update(entity, null);
     }
 
     @Override
-    public <E> void update(JdbcTemplate jdbcTemplate, E entity) {
+    public <E> int update(E entity, ColumnPicker columnPicker) {
+        return update(primaryJdbcTemplate, entity, columnPicker);
+    }
+
+    @Override
+    public <E> int update(JdbcTemplate jdbcTemplate, E entity) {
+        return update(jdbcTemplate, entity, null);
+    }
+
+    @Override
+    public <E> int update(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker) {
         SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
         this.autoSet(PersistenceType.UPDATE, entity);
-        sqlExecutor.toUpdate(jdbcTemplate, entity);
+        return sqlExecutor.toUpdate(jdbcTemplate, entity, columnPicker);
     }
 
     @Override

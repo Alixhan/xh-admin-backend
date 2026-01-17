@@ -139,17 +139,17 @@ public class EntityStaff {
     @Data
     public static class EntityColumnStaff {
         /**
-         * 属性名
+         * Field
          */
         private Field field;
 
         /**
-         * 属性名
+         * 实体属性名
          */
         private String fieldName;
 
         /**
-         * 字段名
+         * 表字段名
          */
         private String columnName;
 

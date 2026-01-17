@@ -59,9 +59,12 @@ public interface SqlExecutor {
     /**
      * 执行update语句
      */
-    default <E> void toUpdate(JdbcTemplate jdbcTemplate, E entity) {
+    default <E> int toUpdate(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker) {
         EntityStaff entityStaff = EntityStaff.init(entity.getClass());
-        String columnStr = entityStaff.getColumns().stream()
+        var columns = entityStaff.getColumns().stream().toList();
+        if (columnPicker != null) columns = columnPicker.exec(columns);
+        if (columns.isEmpty()) throw new RuntimeException("更新列为空");
+        String columnStr = columns.stream()
                 .map(i -> "%s = :%s".formatted(i.getColumnName(), i.getFieldName()))
                 .collect(Collectors.joining(","));
         String idWhereStr = entityStaff.getIdColumns().stream()
@@ -71,8 +74,7 @@ public interface SqlExecutor {
 
         BeanPropertySqlParameterSource arg = new BeanPropertySqlParameterSource(entity);
 
-        new NamedParameterJdbcTemplate(jdbcTemplate).update(sql, arg);
-
+        return new NamedParameterJdbcTemplate(jdbcTemplate).update(sql, arg);
     }
 
     /**
