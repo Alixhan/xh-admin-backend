@@ -106,8 +106,11 @@ public class SysLoginService extends BaseServiceImpl {
             SysUser sysUser = baseJdbcDao.findBySql(SysUser.class, sql, username);
 
             if (sysUser == null) throw new MyException("账号不存在");
-            if (CommonUtil.getString(sysUser.getStatus()).equals("2"))
-                throw new MyException(sysUser.getLockMsg());
+            if (sysUser.getStatus() == 2) {
+                var lockMsg = sysUser.getLockMsg();
+                if (lockMsg == null) lockMsg = "账号已被锁定";
+                throw new MyException(lockMsg);
+            }
             boolean matches = BCrypt.checkpw(password, sysUser.getPassword());
             if (!matches) {
                 if (Boolean.TRUE.equals(sysUser.getIsDemo())) {
@@ -180,7 +183,7 @@ public class SysLoginService extends BaseServiceImpl {
             onlineUserDTO.setUserId(sysUser.getId());
             onlineUserDTO.setUserCode(sysUser.getCode());
             onlineUserDTO.setUserName(sysUser.getName());
-            if(ua != null) {
+            if (ua != null) {
                 onlineUserDTO.setLoginBrowser(ua.getBrowser().getName());
                 onlineUserDTO.setBrowserVersion(ua.getVersion());
                 onlineUserDTO.setLoginBrowser(ua.getBrowser().getName());
