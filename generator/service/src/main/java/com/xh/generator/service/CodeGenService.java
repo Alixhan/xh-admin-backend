@@ -3,6 +3,7 @@ package com.xh.generator.service;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.google.common.base.CaseFormat;
+import com.xh.common.core.dao.sql.EntityColumnStaff;
 import com.xh.common.core.dao.sql.EntityStaff;
 import com.xh.common.core.dto.OnlineUserDTO;
 import com.xh.common.core.entity.BaseEntity;
@@ -437,10 +438,10 @@ public class CodeGenService extends BaseServiceImpl {
         var columns = vo.getColumns();
         if (CommonUtil.isNotEmpty(vo.getExtend())) {
             try {
-                Class extentClass = Class.forName(vo.getExtendEntityClassName());
-                Deque<EntityStaff.EntityColumnStaff<?>> extendCols = EntityStaff.getColumns(extentClass);
+                Class<?> extentClass = Class.forName(vo.getExtendEntityClassName());
+                Deque<EntityColumnStaff> extendCols = EntityStaff.getColumns(extentClass);
                 while (!extendCols.isEmpty()) {
-                    EntityStaff.EntityColumnStaff<?> extendCol = extendCols.poll();
+                    EntityColumnStaff extendCol = extendCols.poll();
                     //不存在时添加继承的列
                     if (columns.stream().noneMatch(i -> extendCol.getColumnName().equals(i.getColumnName()))) {
                         String title = Optional.of(extendCol.getTitle()).orElse(extendCol.getFieldName());
@@ -494,10 +495,10 @@ public class CodeGenService extends BaseServiceImpl {
                 json.put("prop", propStart);
                 json.put("prop2", propEnd);
                 json.put("single", true);
-                
+
                 // 清空原有查询条件
                 querySql.clear();
-                
+
                 //范围查询起
                 var queryCol1 = new GenTableColumnDTO.QuerySql();
                 queryCol1.setProp(propStart);
@@ -507,9 +508,9 @@ public class CodeGenService extends BaseServiceImpl {
                 //范围查询止
                 var queryCol2 = new GenTableColumnDTO.QuerySql();
                 queryCol2.setProp(propEnd);
-                if("date".equals(col.getFormType())) {
+                if ("date".equals(col.getFormType())) {
                     queryCol2.setSql("and date_sub(a." + col.getColumnName() + ", interval 1 day) <= ?");
-                }else {
+                } else {
                     queryCol2.setSql("and a." + col.getColumnName() + " <= ?");
                 }
                 querySql.add(queryCol2);
@@ -622,7 +623,7 @@ public class CodeGenService extends BaseServiceImpl {
     /**
      * 根据javaType设置formType和colType
      */
-    public void setTypeByJavaField(GenTableColumnDTO col, EntityStaff.EntityColumnStaff<?> columnStaff) {
+    public void setTypeByJavaField(GenTableColumnDTO col, EntityColumnStaff columnStaff) {
         Class<?> type = columnStaff.getField().getType();
         String simpleName = type.getSimpleName();
         col.setJavaType(simpleName);

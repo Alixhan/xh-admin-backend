@@ -27,9 +27,9 @@ public class MysqlExecutor implements SqlExecutor {
 
     @Override
     public <E> void toInsert(JdbcTemplate jdbcTemplate, E[] entitys) {
-        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>) entitys[0].getClass());
+        EntityStaff entityStaff = EntityStaff.init(entitys[0].getClass());
         String columnStr = entityStaff.getColumns().stream()
-                .map(EntityStaff.EntityColumnStaff::getColumnName)
+                .map(EntityColumnStaff::getColumnName)
                 .collect(Collectors.joining("`,`", "`", "`"));
         String valueStr = entityStaff.getColumns().stream()
                 .map(i -> {
@@ -51,7 +51,7 @@ public class MysqlExecutor implements SqlExecutor {
 
         List<Map<String, Object>> keyList = generatedKeyHolder.getKeyList();
         for (int i = 0; i < keyList.size(); i++) {
-            for (EntityStaff.EntityColumnStaff<E> idColumn : entityStaff.getIdColumns()) {
+            for (EntityColumnStaff idColumn : entityStaff.getIdColumns()) {
                 Map<String, Object> keyMap = keyList.get(i);
                 var val = (BigInteger) keyMap.get("GENERATED_KEY");
                 if (val == null) val = (BigInteger) keyMap.get(idColumn.getColumnName());
@@ -68,7 +68,7 @@ public class MysqlExecutor implements SqlExecutor {
 
     @Override
     public <E> int toUpdate(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker) {
-        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>) entity.getClass());
+        EntityStaff entityStaff = EntityStaff.init(entity.getClass());
         var columns = entityStaff.getColumns().stream().toList();
         if (columnPicker != null) columns = columnPicker.exec(columns);
         if (columns.isEmpty()) throw new RuntimeException("更新列为空");
@@ -79,16 +79,13 @@ public class MysqlExecutor implements SqlExecutor {
                 .map(i -> "`%s`=:%s".formatted(i.getColumnName(), i.getFieldName()))
                 .collect(Collectors.joining(","));
         var sql = "UPDATE `%s` SET %s WHERE %s".formatted(entityStaff.getTableName(), columnStr, idWhereStr);
-
         BeanPropertySqlParameterSource arg = new BeanPropertySqlParameterSource(entity);
-
         return new NamedParameterJdbcTemplate(jdbcTemplate).update(sql, arg);
     }
 
-
     @Override
     public <E> E findById(JdbcTemplate jdbcTemplate, Class<E> clazz, Object id) {
-        EntityStaff<E> entityStaff = EntityStaff.init(clazz);
+        EntityStaff entityStaff = EntityStaff.init(clazz);
         if (entityStaff.getIdColumns().isEmpty()) {
             throw new PersistenceException("实体没有主键");
         }

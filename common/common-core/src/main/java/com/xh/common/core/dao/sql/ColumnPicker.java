@@ -16,5 +16,5 @@ public interface ColumnPicker {
      * @param columns 原实体列
      * @return 选择后的列
      */
-    <E> List<EntityStaff.EntityColumnStaff<E>> exec(List<EntityStaff.EntityColumnStaff<E>> columns);
+    List<EntityColumnStaff> exec(List<EntityColumnStaff> columns);
 }

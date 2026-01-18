@@ -143,7 +143,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
      * 根据实体的 AutoSet注解自动注入值
      */
     private void autoSet(PersistenceType persistenceType, Object entity) {
-        EntityStaff<?> entityStaff = EntityStaff.init(entity.getClass());
+        EntityStaff entityStaff = EntityStaff.init(entity.getClass());
         entityStaff.autoSet(persistenceType, entity);
     }
 }

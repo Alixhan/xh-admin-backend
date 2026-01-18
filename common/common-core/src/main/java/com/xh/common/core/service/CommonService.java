@@ -255,7 +255,7 @@ public class CommonService extends BaseServiceImpl {
             Class<K> clazz,
             Object... ids
     ) throws NoDataPermissionException {
-        EntityStaff<K> entityStaff = EntityStaff.init(clazz);
+        EntityStaff entityStaff = EntityStaff.init(clazz);
         if (entityStaff.getIdColumns().isEmpty()) {
             throw new PersistenceException("实体没有主键");
         }
