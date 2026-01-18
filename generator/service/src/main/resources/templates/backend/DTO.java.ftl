@@ -27,7 +27,7 @@ public class ${dtoName}${dtoExtendClassStr!''} {
 <#list columns as field>
 <#if !(field.isExtend!false)>
 
-    @Schema(title ="${field.columnName}")
+    @Schema(title ="${field.remarks}")
     private ${field.javaType} ${field.prop};
 </#if>
 </#list>
