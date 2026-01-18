@@ -4,7 +4,7 @@ com.xh.common.core.configuration.MyInterceptor
 com.xh.common.core.configuration.MyFilter
 com.xh.common.core.configuration.SaTokenConfigure
 com.xh.common.core.configuration.StpInterfaceImpl
-com.xh.common.core.dao.BaseJdbcDaoImpl
+com.xh.common.core.configuration.DataSourceConfiguration
 com.xh.common.core.service.BaseServiceImpl
 com.xh.common.core.service.CommonService
 com.xh.common.core.Banner

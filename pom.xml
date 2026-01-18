@@ -98,11 +98,6 @@
             </dependency>
             <dependency>
                 <groupId>com.xh</groupId>
-                <artifactId>common-jdbc</artifactId>
-                <version>${xh-admin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.xh</groupId>
                 <artifactId>common-log</artifactId>
                 <version>${xh-admin.version}</version>
             </dependency>
