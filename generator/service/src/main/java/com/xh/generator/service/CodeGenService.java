@@ -437,10 +437,10 @@ public class CodeGenService extends BaseServiceImpl {
         var columns = vo.getColumns();
         if (CommonUtil.isNotEmpty(vo.getExtend())) {
             try {
-                Class<?> extentClass = Class.forName(vo.getExtendEntityClassName());
-                Deque<EntityStaff.EntityColumnStaff> extendCols = EntityStaff.getColumns(extentClass);
+                Class extentClass = Class.forName(vo.getExtendEntityClassName());
+                Deque<EntityStaff.EntityColumnStaff<?>> extendCols = EntityStaff.getColumns(extentClass);
                 while (!extendCols.isEmpty()) {
-                    EntityStaff.EntityColumnStaff extendCol = extendCols.poll();
+                    EntityStaff.EntityColumnStaff<?> extendCol = extendCols.poll();
                     //不存在时添加继承的列
                     if (columns.stream().noneMatch(i -> extendCol.getColumnName().equals(i.getColumnName()))) {
                         String title = Optional.of(extendCol.getTitle()).orElse(extendCol.getFieldName());
@@ -622,7 +622,7 @@ public class CodeGenService extends BaseServiceImpl {
     /**
      * 根据javaType设置formType和colType
      */
-    public void setTypeByJavaField(GenTableColumnDTO col, EntityStaff.EntityColumnStaff columnStaff) {
+    public void setTypeByJavaField(GenTableColumnDTO col, EntityStaff.EntityColumnStaff<?> columnStaff) {
         Class<?> type = columnStaff.getField().getType();
         String simpleName = type.getSimpleName();
         col.setJavaType(simpleName);

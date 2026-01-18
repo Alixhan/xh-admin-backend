@@ -26,8 +26,8 @@ public class PostgreSqlExecutor implements SqlExecutor {
      */
     public <E> void toInsert(JdbcTemplate jdbcTemplate, E[] entity) {
         E first = entity[0];
-        EntityStaff entityStaff = EntityStaff.init(first.getClass());
-        List<EntityStaff.EntityColumnStaff> columns = entityStaff.getColumns().stream()
+        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>) first.getClass());
+        List<EntityStaff.EntityColumnStaff<E>> columns = entityStaff.getColumns().stream()
                 .filter(i -> {
                     Object fieldValue = i.getFieldValue(first);
                     if (fieldValue != null) return true;
@@ -59,7 +59,7 @@ public class PostgreSqlExecutor implements SqlExecutor {
 
         List<Map<String, Object>> keyList = generatedKeyHolder.getKeyList();
         for (int i = 0; i < keyList.size(); i++) {
-            for (EntityStaff.EntityColumnStaff idColumn : entityStaff.getIdColumns()) {
+            for (EntityStaff.EntityColumnStaff<E> idColumn : entityStaff.getIdColumns()) {
                 var val = keyList.get(i).get(idColumn.getColumnName());
                 idColumn.setFieldValue(entity[i], val);
             }
@@ -70,7 +70,7 @@ public class PostgreSqlExecutor implements SqlExecutor {
      * 转化为update语句
      */
     public <E> int toUpdate(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker) {
-        EntityStaff entityStaff = EntityStaff.init(entity.getClass());
+        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>)entity.getClass());
         var columns = entityStaff.getColumns().stream().toList();
         if (columnPicker != null) columns = columnPicker.exec(columns);
         if (columns.isEmpty()) throw new RuntimeException("更新列为空");
@@ -91,7 +91,7 @@ public class PostgreSqlExecutor implements SqlExecutor {
      * 转化为findById语句
      */
     public <E> E findById(JdbcTemplate jdbcTemplate, Class<E> clazz, Object id) {
-        EntityStaff entityStaff = EntityStaff.init(clazz);
+        EntityStaff<E> entityStaff = EntityStaff.init(clazz);
         if (entityStaff.getIdColumns().isEmpty()) {
             throw new PersistenceException("实体没有主键");
         }

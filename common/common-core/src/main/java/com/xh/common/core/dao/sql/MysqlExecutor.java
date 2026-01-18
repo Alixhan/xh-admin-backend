@@ -27,7 +27,7 @@ public class MysqlExecutor implements SqlExecutor {
 
     @Override
     public <E> void toInsert(JdbcTemplate jdbcTemplate, E[] entitys) {
-        EntityStaff entityStaff = EntityStaff.init(entitys[0].getClass());
+        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>) entitys[0].getClass());
         String columnStr = entityStaff.getColumns().stream()
                 .map(EntityStaff.EntityColumnStaff::getColumnName)
                 .collect(Collectors.joining("`,`", "`", "`"));
@@ -51,7 +51,7 @@ public class MysqlExecutor implements SqlExecutor {
 
         List<Map<String, Object>> keyList = generatedKeyHolder.getKeyList();
         for (int i = 0; i < keyList.size(); i++) {
-            for (EntityStaff.EntityColumnStaff idColumn : entityStaff.getIdColumns()) {
+            for (EntityStaff.EntityColumnStaff<E> idColumn : entityStaff.getIdColumns()) {
                 Map<String, Object> keyMap = keyList.get(i);
                 var val = (BigInteger) keyMap.get("GENERATED_KEY");
                 if (val == null) val = (BigInteger) keyMap.get(idColumn.getColumnName());
@@ -68,7 +68,7 @@ public class MysqlExecutor implements SqlExecutor {
 
     @Override
     public <E> int toUpdate(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker) {
-        EntityStaff entityStaff = EntityStaff.init(entity.getClass());
+        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>) entity.getClass());
         var columns = entityStaff.getColumns().stream().toList();
         if (columnPicker != null) columns = columnPicker.exec(columns);
         if (columns.isEmpty()) throw new RuntimeException("更新列为空");
@@ -88,7 +88,7 @@ public class MysqlExecutor implements SqlExecutor {
 
     @Override
     public <E> E findById(JdbcTemplate jdbcTemplate, Class<E> clazz, Object id) {
-        EntityStaff entityStaff = EntityStaff.init(clazz);
+        EntityStaff<E> entityStaff = EntityStaff.init(clazz);
         if (entityStaff.getIdColumns().isEmpty()) {
             throw new PersistenceException("实体没有主键");
         }

@@ -3,11 +3,9 @@ package com.xh.common.core.dao;
 import com.xh.common.core.dao.sql.*;
 import com.xh.common.core.web.PageQuery;
 import com.xh.common.core.web.PageResult;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
 
 import java.io.Serializable;
 import java.sql.Connection;
@@ -18,31 +16,23 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Repository(value = "baseJdbcDao")
 public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
-    @Resource
-    protected JdbcTemplate primaryJdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
-    @Override
-    public <K> K findById(Class<K> clazz, Serializable id) {
-        return this.findById(clazz, primaryJdbcTemplate, id);
+    public BaseJdbcDaoImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public <K> K findById(Class<K> clazz, JdbcTemplate jdbcTemplate, Serializable id) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
+    public <K> K findById(Class<K> clazz, Serializable id) {
+        SqlExecutor sqlExecutor = this.getSqlExecutor();
         return sqlExecutor.findById(jdbcTemplate, clazz, id);
     }
 
     @Override
     public <K> K findBySql(Class<K> clazz, String sql, Object... args) {
-        return findBySql(clazz, sql, primaryJdbcTemplate, args);
-    }
-
-    @Override
-    public <K> K findBySql(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
+        SqlExecutor sqlExecutor = this.getSqlExecutor();
         sql = sqlExecutor.convertSql(sql);
         K obj = null;
         List<K> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(clazz), args);
@@ -54,12 +44,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <K> List<K> findList(Class<K> clazz, String sql, Object... args) {
-        return findList(clazz, sql, primaryJdbcTemplate, args);
-    }
-
-    @Override
-    public <K> List<K> findList(Class<K> clazz, String sql, JdbcTemplate jdbcTemplate, Object... args) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
+        SqlExecutor sqlExecutor = this.getSqlExecutor();
         sql = sqlExecutor.convertSql(sql);
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(clazz), args);
     }
@@ -71,27 +56,22 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <K> PageResult<K> query(Class<K> clazz, PageQuery<?> pageQuery) {
-        return query(clazz, pageQuery, primaryJdbcTemplate);
-    }
-
-    @Override
-    public <K> PageResult<K> query(Class<K> clazz, PageQuery<?> pageQuery, JdbcTemplate jdbcTemplate) {
         String sql = pageQuery.getSql();
-        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
+        SqlExecutor sqlExecutor = this.getSqlExecutor();
         sql = sqlExecutor.convertSql(sql);
         PageResult<K> pageResult = new PageResult<>();
         if (pageQuery.getIsPage()) {
             String pageSql = sqlExecutor.getPageSql(sql, pageQuery.getCurrentPage(), pageQuery.getPageSize());
             String totalSql = "SELECT COUNT(1) FROM (%s) PAGE".formatted(sql);
             Integer total = jdbcTemplate.queryForObject(totalSql, Integer.class, pageQuery.getArgs().toArray());
-            List<K> list = findList(clazz, pageSql, jdbcTemplate, pageQuery.getArgs().toArray());
+            List<K> list = findList(clazz, pageSql, pageQuery.getArgs().toArray());
             pageResult.setList(list);
             pageResult.setTotal(total);
             pageResult.setIsPage(true);
             pageResult.setCurrentPage(pageQuery.getCurrentPage());
             pageResult.setPageSize(pageQuery.getPageSize());
         } else {
-            List<K> list = findList(clazz, sql, jdbcTemplate, pageQuery.getArgs().toArray());
+            List<K> list = findList(clazz, sql, pageQuery.getArgs().toArray());
             pageResult = new PageResult<>(list, list.size());
         }
         return pageResult;
@@ -99,12 +79,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <E> void insert(E[] entities) {
-        this.insert(primaryJdbcTemplate, entities);
-    }
-
-    @Override
-    public <E> void insert(JdbcTemplate jdbcTemplate, E[] entities) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
+        SqlExecutor sqlExecutor = this.getSqlExecutor();
         for (E entity : entities) {
             this.autoSet(PersistenceType.INSERT, entity);
         }
@@ -113,13 +88,8 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <E> void insert(E entity) {
-        this.insert(primaryJdbcTemplate, entity);
-    }
-
-    @Override
-    public <E> void insert(JdbcTemplate jdbcTemplate, E entity) {
         Object[] entities = {entity};
-        this.insert(jdbcTemplate, entities);
+        this.insert(entities);
     }
 
     @Override
@@ -129,29 +99,14 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
 
     @Override
     public <E> int update(E entity, ColumnPicker columnPicker) {
-        return update(primaryJdbcTemplate, entity, columnPicker);
-    }
-
-    @Override
-    public <E> int update(JdbcTemplate jdbcTemplate, E entity) {
-        return update(jdbcTemplate, entity, null);
-    }
-
-    @Override
-    public <E> int update(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
+        SqlExecutor sqlExecutor = this.getSqlExecutor();
         this.autoSet(PersistenceType.UPDATE, entity);
         return sqlExecutor.toUpdate(jdbcTemplate, entity, columnPicker);
     }
 
     @Override
     public <E> void deleteById(Class<E> clazz, Serializable id) {
-        this.deleteById(clazz, primaryJdbcTemplate, id);
-    }
-
-    @Override
-    public <E> void deleteById(Class<E> clazz, JdbcTemplate jdbcTemplate, Serializable id) {
-        SqlExecutor sqlExecutor = this.getSqlExecutor(jdbcTemplate);
+        SqlExecutor sqlExecutor = this.getSqlExecutor();
         sqlExecutor.toDeleteById(jdbcTemplate, clazz, id);
     }
 
@@ -160,7 +115,7 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
      */
     private static final ConcurrentHashMap<JdbcTemplate, String> dbTypeMap = new ConcurrentHashMap<>();
 
-    protected String getDbType(JdbcTemplate jdbcTemplate) {
+    private String getDbType() {
         String dbType = dbTypeMap.get(jdbcTemplate);
         if (dbType == null) {
             try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
@@ -175,8 +130,8 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
     }
 
     @Override
-    public SqlExecutor getSqlExecutor(JdbcTemplate jdbcTemplate) {
-        var dbType = this.getDbType(jdbcTemplate);
+    public SqlExecutor getSqlExecutor() {
+        var dbType = this.getDbType();
         return switch (dbType) {
             case "MySQL" -> new MysqlExecutor();
             case "PostgreSQL" -> new PostgreSqlExecutor();
@@ -184,16 +139,11 @@ public class BaseJdbcDaoImpl implements BaseJdbcDao {
         };
     }
 
-    @Override
-    public SqlExecutor getSqlExecutor() {
-        return this.getSqlExecutor(primaryJdbcTemplate);
-    }
-
     /**
      * 根据实体的 AutoSet注解自动注入值
      */
     private void autoSet(PersistenceType persistenceType, Object entity) {
-        EntityStaff entityStaff = EntityStaff.init(entity.getClass());
+        EntityStaff<?> entityStaff = EntityStaff.init(entity.getClass());
         entityStaff.autoSet(persistenceType, entity);
     }
 }

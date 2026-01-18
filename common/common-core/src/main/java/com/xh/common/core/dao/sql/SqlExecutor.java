@@ -25,7 +25,7 @@ public interface SqlExecutor {
      * 执行insert语句
      */
     default <E> void toInsert(JdbcTemplate jdbcTemplate, E[] entity) {
-        EntityStaff entityStaff = EntityStaff.init(entity[0].getClass());
+        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>) entity[0].getClass());
         String columnStr = entityStaff.getColumns().stream()
                 .map(EntityStaff.EntityColumnStaff::getColumnName)
                 .collect(Collectors.joining(","));
@@ -49,7 +49,7 @@ public interface SqlExecutor {
 
         List<Map<String, Object>> keyList = generatedKeyHolder.getKeyList();
         for (int i = 0; i < keyList.size(); i++) {
-            for (EntityStaff.EntityColumnStaff idColumn : entityStaff.getIdColumns()) {
+            for (EntityStaff.EntityColumnStaff<E> idColumn : entityStaff.getIdColumns()) {
                 var val = keyList.get(i).get(idColumn.getColumnName());
                 idColumn.setFieldValue(entity[i], val);
             }
@@ -60,7 +60,7 @@ public interface SqlExecutor {
      * 执行update语句
      */
     default <E> int toUpdate(JdbcTemplate jdbcTemplate, E entity, ColumnPicker columnPicker) {
-        EntityStaff entityStaff = EntityStaff.init(entity.getClass());
+        EntityStaff<E> entityStaff = EntityStaff.init((Class<E>) entity.getClass());
         var columns = entityStaff.getColumns().stream().toList();
         if (columnPicker != null) columns = columnPicker.exec(columns);
         if (columns.isEmpty()) throw new RuntimeException("更新列为空");
@@ -81,7 +81,7 @@ public interface SqlExecutor {
      * 执行delete语句
      */
     default <E> void toDeleteById(JdbcTemplate jdbcTemplate, Class<E> clazz, Object id) {
-        EntityStaff entityStaff = EntityStaff.init(clazz);
+        EntityStaff<E> entityStaff = EntityStaff.init(clazz);
         assert entityStaff.getIdColumns().peek() != null;
         String idWhereStr = entityStaff.getIdColumns().peek().getColumnName() + " = ?";
         var sql = "DELETE FROM %s WHERE %s".formatted(entityStaff.getTableName(), idWhereStr);
@@ -92,7 +92,7 @@ public interface SqlExecutor {
      * 执行findById语句
      */
     default <E> E findById(JdbcTemplate jdbcTemplate, Class<E> clazz, Object id) {
-        EntityStaff entityStaff = EntityStaff.init(clazz);
+        EntityStaff<E> entityStaff = EntityStaff.init(clazz);
         if (entityStaff.getIdColumns().isEmpty()) {
             throw new PersistenceException("实体没有主键");
         }

@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -21,99 +20,76 @@ import java.util.concurrent.ConcurrentMap;
  * 实体的映射详情
  * sunxh 2024/12/4
  */
-@Setter
 @Getter
-public class EntityStaff {
-    public static final ConcurrentMap<Class<?>, EntityStaff> classMap = new ConcurrentHashMap<>();
+public class EntityStaff<E> {
+    private static final ConcurrentMap<Class<?>, EntityStaff<?>> classMap = new ConcurrentHashMap<>();
+
+    private static <T> void register(Class<T> clazz, EntityStaff<T> staff) {
+        classMap.put(clazz, staff);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> EntityStaff<T> getStaff(Class<T> clazz) {
+        return (EntityStaff<T>) classMap.get(clazz);
+    }
 
     /**
      * 实体Class
      */
-    private Class<?> clazz;
+    private final Class<E> clazz;
 
     /**
      * 实体对应表名
      */
-    private String tableName;
+    private final String tableName;
 
     /**
      * 主键列
      */
-    private Deque<EntityColumnStaff> idColumns = new LinkedList<>();
+    private final Deque<EntityColumnStaff<E>> idColumns = new LinkedList<>();
 
     /**
      * 所有列
      */
-    private Deque<EntityColumnStaff> columns = new LinkedList<>();
+    private final Deque<EntityColumnStaff<E>> columns = new LinkedList<>();
 
     /**
      * 初始化EntityStaff
      */
-    public static EntityStaff init(Class<?> clazz) {
-        var staff = classMap.get(clazz);
+    public static <E> EntityStaff<E> init(Class<E> clazz) {
+        var staff = EntityStaff.getStaff(clazz);
         if (staff == null) {
-            staff = new EntityStaff();
-            staff.clazz = clazz;
-
             Table table = clazz.getAnnotation(Table.class);
             if (table == null) {
                 throw new PersistenceException("%s 不是一个实体".formatted(clazz.getSimpleName()));
             }
-
-            staff.tableName = table.name();
-            if (CommonUtil.isEmpty(staff.tableName)) {
-                staff.tableName = CommonUtil.toLowerUnderscore(clazz.getSimpleName());
-            }
-
-            staff.columns = EntityStaff.getColumns(clazz);
+            var tableName = table.name();
+            if (CommonUtil.isEmpty(tableName)) tableName = CommonUtil.toLowerUnderscore(clazz.getSimpleName());
+            staff = new EntityStaff<>(clazz, tableName);
+            staff.columns.addAll(EntityStaff.getColumns(clazz));
             staff.columns.stream().filter(EntityColumnStaff::getIsId).forEach(staff.idColumns::add);
-
-            classMap.put(clazz, staff);
+            EntityStaff.register(clazz, staff);
         }
-
         return staff;
     }
 
     /**
      * 获取实体类所有列
      */
-    public static Deque<EntityColumnStaff> getColumns(Class<?> clazz) {
-        Deque<EntityColumnStaff> columns = new LinkedList<>();
+    public static <E> Deque<EntityColumnStaff<E>> getColumns(Class<E> clazz) {
+        Deque<EntityColumnStaff<E>> columns = new LinkedList<>();
         Collection<Field> fields = CommonUtil.getAllFields(clazz);
         for (Field field : fields) {
-            String fieldName = field.getName();
             Transient ignoredField = field.getAnnotation(Transient.class);
-            if (ignoredField == null) {
-                Column column = field.getAnnotation(Column.class);
-                String columnName = null;
-                if (column != null) columnName = column.name();
-                if (CommonUtil.isEmpty(columnName)) columnName = CommonUtil.toLowerUnderscore(fieldName);
-
-                EntityColumnStaff entityColumnStaff = new EntityColumnStaff();
-                entityColumnStaff.setColumnName(columnName);
-                entityColumnStaff.setFieldName(fieldName);
-                entityColumnStaff.setAutoSet(field.getAnnotation(AutoSet.class));
-                columns.add(entityColumnStaff);
-
-                Schema schema = field.getAnnotation(Schema.class);
-                if (schema != null) {
-                    entityColumnStaff.setTitle(schema.title());
-                }
-
-                if (field.getAnnotation(Id.class) != null) {
-                    entityColumnStaff.setIsId(true);
-                    entityColumnStaff.setGeneratedValue(field.getAnnotation(GeneratedValue.class));
-                } else {
-                    entityColumnStaff.setIsId(false);
-                }
-                field.setAccessible(true);
-                entityColumnStaff.setField(field);
-            }
+            if (ignoredField == null) columns.add(new EntityColumnStaff<>(field));
         }
         return columns;
     }
 
-    private EntityStaff() {}
+    private EntityStaff(Class<E> clazz, String tableName) {
+        this.clazz = clazz;
+        this.tableName = tableName;
+    }
 
     /**
      * 根据实体的 AutoSet注解自动注入值
@@ -137,7 +113,7 @@ public class EntityStaff {
      * 实体映射列
      */
     @Data
-    public static class EntityColumnStaff {
+    public static class EntityColumnStaff<E> {
         /**
          * Field
          */
@@ -172,6 +148,39 @@ public class EntityStaff {
          * 自动注入注解
          */
         private AutoSet autoSet;
+
+        private EntityColumnStaff(Field field) {
+            this.field = field;
+            String fieldName = field.getName();
+            Column column = field.getAnnotation(Column.class);
+            String columnName = null;
+            if (column != null) columnName = column.name();
+            if (CommonUtil.isEmpty(columnName)) columnName = CommonUtil.toLowerUnderscore(fieldName);
+
+            this.setColumnName(columnName);
+            this.setFieldName(fieldName);
+            this.setAutoSet(field.getAnnotation(AutoSet.class));
+
+            Schema schema = field.getAnnotation(Schema.class);
+            if (schema != null) {
+                this.setTitle(schema.title());
+            }
+
+            if (field.getAnnotation(Id.class) != null) {
+                this.setIsId(true);
+                this.setGeneratedValue(field.getAnnotation(GeneratedValue.class));
+            } else {
+                this.setIsId(false);
+            }
+            field.setAccessible(true);
+            this.setField(field);
+        }
+
+        public static <E> EntityColumnStaff<E> create(Class<E> clazz, String fieldName) {
+            Field f = CommonUtil.getField(clazz, fieldName);
+            if (f == null) throw new RuntimeException(fieldName + "在" + clazz.getName() + "不存在");
+            return new EntityColumnStaff<>(f);
+        }
 
         /**
          * 设置实体类相应字段值
