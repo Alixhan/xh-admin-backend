@@ -80,6 +80,9 @@ public class SysLog extends BaseEntity<Integer> {
     @Schema(title = "使用角色名称")
     private String roleName;
 
+    @Schema(title = "登录设备")
+    private String deviceType;
+
     @Transient
     @Schema(title = "用户名称")
     private String name;

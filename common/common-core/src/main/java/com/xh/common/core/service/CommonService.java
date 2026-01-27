@@ -93,6 +93,7 @@ public class CommonService extends BaseServiceImpl {
                 sysLog.setSysRoleId(onlineUserDTO.getRoleId());
                 sysLog.setOrgName(onlineUserDTO.getOrgName());
                 sysLog.setRoleName(onlineUserDTO.getRoleName());
+                sysLog.setDeviceType(onlineUserDTO.getDeviceType());
                 BeanUtils.copyProperties(onlineUserDTO, sysLog);
             }
 
