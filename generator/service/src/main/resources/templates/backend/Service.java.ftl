@@ -109,7 +109,7 @@ public class ${serviceName} extends BaseServiceImpl {
     <#if isDataPermission!false>
         // 校验数据权限是否满足
         commonService.checkDataPermissionByIds(
-            "sys_log", "create_by", "sys_role_id", "sys_org_id",
+            "${tableName}", "create_by", "sys_role_id", "sys_org_id",
             ${entityName}.class, id
         );
     </#if>
@@ -125,7 +125,7 @@ public class ${serviceName} extends BaseServiceImpl {
     <#if isDataPermission!false>
         // 校验数据权限是否满足
         commonService.checkDataPermissionByIds(
-            "sys_log", "create_by", "sys_role_id", "sys_org_id",
+            "${tableName}", "create_by", "sys_role_id", "sys_org_id",
             ${entityName}.class, ids.toArray()
         );
     </#if>
