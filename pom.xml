@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.5</version>
+        <version>4.0.5</version>
         <relativePath/>
     </parent>
 
@@ -17,20 +17,20 @@
     <name>xh-admin-backend</name>
     <description>晓寒管理系统后端</description>
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <xh-admin.version>0.0.1-SNAPSHOT</xh-admin.version>
-        <spring-cloud-dependencies.version>2025.0.0</spring-cloud-dependencies.version>
-        <spring-cloud-alibaba-dependencies.version>2025.0.0.0-preview</spring-cloud-alibaba-dependencies.version>
-        <minio.version>8.5.17</minio.version>
-        <springdoc-openapi-starter-webmvc-ui.version>2.8.11</springdoc-openapi-starter-webmvc-ui.version>
-        <guava.version>33.4.8-jre</guava.version>
-        <sa-token-spring-boot3-starter.version>1.44.0</sa-token-spring-boot3-starter.version>
-        <hutool-version>5.8.39</hutool-version>
-        <weixin-java-version>4.7.0</weixin-java-version>
-        <javacv-version>1.5.11</javacv-version>
-        <ip2region-version>2.7.0</ip2region-version>
-        <xxl-job-version>3.1.0</xxl-job-version>
-        <fastjson2-version>2.0.58</fastjson2-version>
+        <spring-cloud-dependencies.version>2025.1.1</spring-cloud-dependencies.version>
+        <spring-cloud-alibaba-dependencies.version>2025.1.0.0</spring-cloud-alibaba-dependencies.version>
+        <minio.version>9.0.0</minio.version>
+        <springdoc-openapi-starter-webmvc-ui.version>3.0.3</springdoc-openapi-starter-webmvc-ui.version>
+        <guava.version>33.5.0-jre</guava.version>
+        <sa-token-spring-boot4-starter.version>1.45.0</sa-token-spring-boot4-starter.version>
+        <hutool-version>5.8.44</hutool-version>
+        <weixin-java-version>4.8.2-20260419.222532</weixin-java-version>
+        <javacv-version>1.5.13</javacv-version>
+        <ip2region-version>3.3.7</ip2region-version>
+        <xxl-job-version>3.4.0</xxl-job-version>
+        <fastjson2-version>2.0.61</fastjson2-version>
     </properties>
 
     <modules>
@@ -128,14 +128,14 @@
             </dependency>
             <dependency>
                 <groupId>cn.dev33</groupId>
-                <artifactId>sa-token-spring-boot3-starter</artifactId>
-                <version>${sa-token-spring-boot3-starter.version}</version>
+                <artifactId>sa-token-spring-boot4-starter</artifactId>
+                <version>${sa-token-spring-boot4-starter.version}</version>
             </dependency>
             <!-- Sa-Token 整合 Redis （使用 jackson 序列化方式） -->
             <dependency>
                 <groupId>cn.dev33</groupId>
                 <artifactId>sa-token-redis-jackson</artifactId>
-                <version>${sa-token-spring-boot3-starter.version}</version>
+                <version>${sa-token-spring-boot4-starter.version}</version>
             </dependency>
             <dependency>
                 <groupId>cn.hutool</groupId>
@@ -196,7 +196,7 @@
                             <name>xh-admin-${project.artifactId}</name>
                             <env>
                                 <!-- jdk版本-->
-                                <BP_JVM_VERSION>21</BP_JVM_VERSION>
+                                <BP_JVM_VERSION>25</BP_JVM_VERSION>
                             </env>
                             <!-- 镜像打标签 -->
                             <tags>

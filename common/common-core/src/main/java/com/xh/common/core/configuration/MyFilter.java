@@ -38,7 +38,7 @@ public class MyFilter extends HttpFilter {
 
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException {
         preHandle(request);
-        ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
+        ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request, 1024 * 10);
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
         try {
             chain.doFilter(requestWrapper, responseWrapper);

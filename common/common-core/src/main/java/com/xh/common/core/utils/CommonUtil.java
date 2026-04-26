@@ -2,9 +2,9 @@ package com.xh.common.core.utils;
 
 import com.google.common.base.CaseFormat;
 import lombok.extern.slf4j.Slf4j;
-import org.lionsoul.ip2region.xdb.Searcher;
+import org.lionsoul.ip2region.service.Config;
+import org.lionsoul.ip2region.service.Ip2Region;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.util.FileCopyUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +25,9 @@ import java.util.Map;
  */
 @Slf4j
 public class CommonUtil {
+    // 全局ip查询对象
+    final static Ip2Region ip2Region = initIpRegionSearch();
+
     /**
      * 获取字符串，null返回空串
      */
@@ -161,30 +164,52 @@ public class CommonUtil {
 
 
     /**
-     * 离线解析ip地址
+     * 离线解析ip地址，支持ipv4和ipv6
      */
     public static String getIpRegion2(String ip) {
         if ("0:0:0:0:0:0:0:1".equals(ip)) return null;
-        // 1、创建 searcher 对象
-        String dbPath = "/ip2region.xdb";
-        try (
-                InputStream inputStream = new ClassPathResource(dbPath).getInputStream();
-                MySearcher searcher = MySearcher.newWithBuffer(FileCopyUtils.copyToByteArray(inputStream))
-        ) {
-            return searcher.search(ip).replaceAll("\\|", "").replaceAll("0", "");
+        try {
+            return ip2Region.search(ip).replace("0", "");
         } catch (Exception e) {
             log.error("解析ip属地异常", e);
             return "";
         }
     }
 
-    static class MySearcher extends Searcher implements AutoCloseable {
-        public MySearcher(String dbFile, byte[] vectorIndex, byte[] cBuff) throws IOException {
-            super(dbFile, vectorIndex, cBuff);
-        }
 
-        public static MySearcher newWithBuffer(byte[] cBuff) throws IOException {
-            return new MySearcher(null, null, cBuff);
+    public static Ip2Region initIpRegionSearch() {
+        try {
+
+            InputStream v4InputStream = new ClassPathResource("/ip2region_v4.xdb").getInputStream();
+            // 1, 创建 v4 的配置：指定缓存策略和 v4 的 xdb 文件路径
+            final Config v4Config = Config.custom()
+                    .setCachePolicy(Config.BufferCache)     // 指定缓存策略:  NoCache / VIndexCache / BufferCache
+                    .setSearchers(15)                       // 设置初始化的查询器数量
+                    // .setCacheSliceBytes(int)             // 设置缓存的分片字节数，默认为 50MiB
+                    .setXdbInputStream(v4InputStream)      // 设置 v4 xdb 文件的 inputstream 对象
+                    // .setXdbFile(File)                    // 设置 v4 xdb File 对象
+                    // .setFairLock(boolean)                // 设置 ReentrantLock 是否使用公平锁
+//                    .setXdbPath("ip2region v4 xdb path")    // 设置 v4 xdb 文件的路径
+                    .asV4();    // 指定为 v4 配置
+
+//            InputStream v6InputStream = new ClassPathResource("/ip2region_v6.xdb").getInputStream();
+//            // 2, 创建 v6 的配置：指定缓存策略和 v6 的 xdb 文件路径
+//            final Config v6Config = Config.custom()
+//                    .setCachePolicy(Config.BufferCache)     // 指定缓存策略: NoCache / VIndexCache / BufferCache
+//                    .setSearchers(15)                       // 设置初始化的查询器数量
+//                    // .setCacheSliceBytes(int)             // 设置缓存的分片字节数，默认为 50MiB
+//                     .setXdbInputStream(v6InputStream)      // 设置 v6 xdb 文件的 inputstream 对象
+//                    // .setXdbFile(File)                    // 设置 v6 xdb File 对象
+//                    // .setFairLock(boolean)                // 设置 ReentrantLock 是否使用公平锁
+//                    .setXdbPath("ip2region v6 xdb path")    // 设置 v6 xdb 文件的路径
+//                    .asV6();    // 指定为 v6 配置
+
+            // 备注：Xdb 三种初始化输入的优先级：XdbInputStream -> XdbFile -> XdbPath
+            // setXdbInputStream 仅方便使用者从 jar 包中加载 xdb 文件内容，这时 cachePolicy 只能设置为 Config.BufferCache
+            return Ip2Region.create(v4Config, null);
+        } catch (Exception e) {
+            log.error("ipRegion init error", e);
+            throw new RuntimeException(e);
         }
     }
 }

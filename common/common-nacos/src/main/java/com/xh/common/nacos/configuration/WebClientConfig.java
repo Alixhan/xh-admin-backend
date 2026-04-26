@@ -8,7 +8,7 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.JacksonJsonDecoder;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -40,8 +40,8 @@ public class WebClientConfig {
                 })
                 //序列化配置
                 .exchangeStrategies(ExchangeStrategies.builder()
-                        .codecs(configurer -> configurer.defaultCodecs().jackson2JsonDecoder(
-                                new Jackson2JsonDecoder(WebConfig.getDefaultObjectMapper())
+                        .codecs(configurer -> configurer.defaultCodecs().jacksonJsonDecoder(
+                                new JacksonJsonDecoder(WebConfig.getDefaultJsonMapper())
                         )).build()
                 );
     }

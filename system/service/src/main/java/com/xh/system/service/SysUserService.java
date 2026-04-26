@@ -1,6 +1,5 @@
 package com.xh.system.service;
 
-import cn.dev33.satoken.secure.BCrypt;
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import com.xh.common.core.dto.SysLoginUserInfoDTO;
@@ -15,6 +14,7 @@ import com.xh.system.client.dto.SysUserJobDTO;
 import com.xh.system.client.entity.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;

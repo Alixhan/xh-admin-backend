@@ -1,11 +1,5 @@
 package com.xh.common.core.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Resource;
 import jakarta.servlet.Filter;
@@ -15,17 +9,24 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverters;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ext.javatime.deser.LocalDateDeserializer;
+import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
+import tools.jackson.databind.ext.javatime.ser.LocalDateSerializer;
+import tools.jackson.databind.ext.javatime.ser.LocalDateTimeSerializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * web配置类
@@ -85,10 +86,12 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+    public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
         // 在头部添加，优先级别最高
-        converters.addFirst(new MappingJackson2HttpMessageConverter(getDefaultObjectMapper()));
-        converters.addFirst(new ByteArrayHttpMessageConverter());
+        builder.configureMessageConvertersList(converters -> {
+            converters.addFirst(new JacksonJsonHttpMessageConverter(getDefaultJsonMapper()));
+            converters.addFirst(new ByteArrayHttpMessageConverter());
+        });
     }
 
 
@@ -96,18 +99,19 @@ public class WebConfig implements WebMvcConfigurer {
     private static final String DATE_FORMAT = "yyyy-MM-dd";
 
     /**
-     * 定义全局默认时间序列化
+     * 定义全局默认映射器
      */
-    public static ObjectMapper getDefaultObjectMapper() {
-        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder()
-                .indentOutput(true)
-                .dateFormat(new SimpleDateFormat("yyyy-MM-dd"))
-                .simpleDateFormat(DATE_TIME_FORMAT)
-                .serializers(new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
-                .serializers(new LocalDateSerializer(DateTimeFormatter.ofPattern(DATE_FORMAT)))
-                .deserializers(new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
-                .deserializers(new LocalDateDeserializer(DateTimeFormatter.ofPattern(DATE_FORMAT)))
-                .modulesToInstall(new ParameterNamesModule());
-        return builder.build();
+    public static JsonMapper getDefaultJsonMapper() {
+        SimpleModule timeModule = new SimpleModule();
+        timeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));
+        timeModule.addSerializer(LocalDate.class, new LocalDateSerializer(DateTimeFormatter.ofPattern(DATE_FORMAT)));
+        timeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));
+        timeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ofPattern(DATE_FORMAT)));
+
+        return JsonMapper.builder()
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .defaultDateFormat(new SimpleDateFormat(DATE_TIME_FORMAT))
+                .addModule(timeModule)
+                .build();
     }
 }

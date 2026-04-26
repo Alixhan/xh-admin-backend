@@ -146,7 +146,7 @@ public class SysFileService extends BaseServiceImpl {
                                 .bucket(bucket)
                                 .object(object)
                                 .contentType(multipartFile.getContentType())
-                                .stream(inputStream, multipartFile.getSize(), -1)
+                                .stream(inputStream, multipartFile.getSize(), -1L)
                                 .build()
                 );
             } catch (Exception e) {
